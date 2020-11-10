@@ -1,0 +1,12 @@
+{
+    "maxCardsInHand": 6,
+    "maxCardsInField": 5,
+    "energyPerTurn": 1,
+    "initialLife": 100,
+    "initialEnergy": 1,
+    "initialCardsInHand": 3,
+    "minCardAttack": 5,
+    "maxCardAttack": 9,
+    "minCardLife": 10,
+    "maxCardLife": 18
+}

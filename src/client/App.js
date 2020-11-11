@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from 'react'
 import ReactDOM from 'react-dom'
-import { BrowserRouter, Route } from 'react-router-dom'
+import { BrowserRouter, Route, Switch, useHistory } from 'react-router-dom'
 import WelcomePage from './components/WelcomePage'
 import CreatePage from './components/CreatePage'
 import JoinPage from './components/JoinPage'
@@ -12,6 +12,7 @@ import './index.styl'
 
 const App = () => {
 	const { state, dispatch } = useContext(store)
+	const history = useHistory()
 
 	useEffect(() => {
 		setup()
@@ -28,6 +29,28 @@ const App = () => {
 			setListeners()
 		}
 	}, [state.socket])
+
+	const setListeners = () => {
+		state.socket.on('player-two-joined', () => {
+			// redirectTo(history, '/game')
+		})
+		state.socket.on('user-error', data => {
+			dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: data,
+				},
+			})
+		})
+		state.socket.on('game-created', () => {
+			dispatch({
+				type: 'SET_SUCCESS',
+				payload: {
+					success: 'Game created successfully'
+				}
+			})
+		})
+	}
 
 	const setup = async () => {
 		if (window.ethereum) {
@@ -76,30 +99,15 @@ const App = () => {
 		})
 	}
 
-	const setListeners = () => {
-		state.socket.on('player-two-joined', () => {
-			// redirectTo(history, '/game')
-		})
-		state.socket.on('user-error', data => {
-			dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: data,
-				},
-			})
-		})
-	}
-
-	const redirectTo = (history, location) => {
-		history.push(location)
-	}
-
 	return (
-		<BrowserRouter>
-			<div>
-				<p className={!state.error ? 'hidden' : 'error-message'}>
-					{state.error}
-				</p>
+		<div>
+			<p className={!state.success ? 'hidden' : 'success-message'}>
+				{state.success}
+			</p>
+			<p className={!state.error ? 'hidden' : 'error-message'}>
+				{state.error}
+			</p>
+			<Switch>
 				<Route
 					path='/'
 					exact
@@ -153,14 +161,19 @@ const App = () => {
 						/>
 					)}
 				/>
-			</div>
-		</BrowserRouter>
+				<Route render={() => (
+					<h1>Default 404 page</h1>
+				)}/>
+			</Switch>
+		</div>
 	)
 }
 
 ReactDOM.render(
 	<StateProvider>
-		<App />
+		<BrowserRouter>
+			<App />
+		</BrowserRouter>
 	</StateProvider>,
 	document.querySelector('#root')
 )

@@ -5,7 +5,9 @@ const initialState = {
 	setupComplete: false,
     socket: null,
     error: '',
+    success: '',
     ytxBet: 0,
+    redirect: null,
 }
 const store = createContext(initialState)
 const { Provider } = store
@@ -21,18 +23,19 @@ const StateProvider = ({ children }) => {
                     ytxBet: action.payload.ytxBet,
                 }
                 return newState
+            case 'SET_SUCCESS':
+                console.log('set success')
+                newState = {
+                    ...state,
+                    success: action.payload.success,
+                }
+                return newState
             case 'SET_ERROR':
                 console.log('set error')
                 newState = {
                     ...state,
                     error: action.payload.error,
                 }
-                setTimeout(() => {
-                    dispatch({
-                        type: 'SET_ERROR',
-                        payload: { error: '' },
-                    })
-                }, 5e3)
                 return newState
             case 'SET_SOCKET':
                 console.log('set socket')

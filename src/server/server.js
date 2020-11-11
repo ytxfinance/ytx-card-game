@@ -21,9 +21,6 @@ let contractAddress
 let gameId = 0
 // The game list of unstarted games to allow people to join
 let games = []
-// A mapping to not allow users to create more than 1 game where you can check the user address
-// like this '0x893482934': true
-let hasExistingGame = {}
 // A mapping for gameId -> game
 let gameMap = {}
 const GAME_STATUS = {
@@ -61,65 +58,75 @@ io.on('connection', socket => {
 	})
 	socket.on('create-game', async data => {
         console.log('Create game called by', socket.id)
-        let lastestGameId
 		// gameId++
-		// if (!data.ytxBet || data.ytxBet == 0) {
-		// 	return io.emit('user-error', '#1 The bet is empty')
-		// }
-		// if (!data.address || data.address.length == 0) {
-		// 	return io.emit('user-error', '#3 The user address is empty')
-		// }
-		// if (hasExistingGame[data.address]) {
-		// 	return io.emit('user-error', '#4 You already have a game created')
-		// }
-        // hasExistingGame[data.address] = true
-        try {
-            lastestGameId = await db.collection('latest-game-id').findOne({
-                latestGameId: {
-                    $exists: true,
-                } 
-            })
-            console.log('latestGameId', latestGameId)
-        } catch (e) {
-            console.log('error', e)
-            return io.emit('user-error', '#10 Error retrieving the latest game id.')
-        }
-		// let game = {
-		// 	gameId,
-		// 	gameName: data.gameName || 'Game',
-		// 	ytxBet: data.ytxBet,
-		// 	status: GAME_STATUS.CREATED,
-		// 	player1: {
-		// 		turn: 0, // The current turn to know when is when
-		// 		address: data.address,
-		// 		socketId: socket.id,
-		// 		life: 100,
-		// 		energy: 10,
-		// 		field: [],
-		// 	},
-		// 	player2: {
-		// 		turn: 0,
-		// 		address: '',
-		// 		socketId: '',
-		// 		life: 100,
-		// 		energy: 10,
-		// 		field: [],
-		// 	},
-		// }
-		// console.log('game', game)
-		// console.log('data', data)
-		// try {
-		// 	await db.collection('games').insertOne(game)
-		// } catch (e) {
-		// 	console.log('Error inserting new game', e)
-		// 	return io.emit(
-		// 		'user-error',
-		// 		'#5 Error inserting user game in the database try again'
-		// 	)
-		// }
+		let lastGameId
+		// To get the last game ID
+		try {
+			lastGameId = await db.collection('games')
+				.find({}, {
+					gameId: true,
+				})
+				.sort({$natural: -1})
+				.limit(1)
+				.next()
+			if (!lastGameId) lastGameId = 1
+			console.log('last game id', lastGameId)
+		} catch (e) {
+			console.log('err', e)
+			return io.emit('user-error', "#11 Couldn't find the last game id")
+		}
+		// Check if the user has an existing game with the created status
+		try {
+			const existingGame = await db.collection('games')
+				.findOne({
+					status: GAME_STATUS.CREATED,
+				})
+			console.log('existing game', existingGame)
+			return io.emit('user-error', '#4 You already have a game created cancel it before creating a new one')
+		} catch (e) {}
+		if (!data.ytxBet || data.ytxBet == 0) {
+			return io.emit('user-error', '#1 The bet is empty')
+		}
+		if (!data.address || data.address.length == 0) {
+			return io.emit('user-error', '#3 The user address is empty')
+		}
+		// The new game to create
+		let game = {
+			gameId: lastGameId,
+			gameName: data.gameName || 'Game',
+			ytxBet: data.ytxBet,
+			status: GAME_STATUS.CREATED,
+			created: Date.now(),
+			player1: {
+				turn: 0, // The current turn to know when is when
+				address: data.address,
+				socketId: socket.id,
+				life: 100,
+				energy: 10,
+				field: [],
+			},
+			player2: {
+				turn: 0,
+				address: '',
+				socketId: '',
+				life: 100,
+				energy: 10,
+				field: [],
+			},
+		}
+		console.log('game', game)
+		try {
+			await db.collection('games').insertOne(game)
+		} catch (e) {
+			console.log('Error inserting new game', e)
+			return io.emit(
+				'user-error',
+				'#5 Error inserting user game in the database try again'
+			)
+		}
 		// games.push(game)
 		// gameMap[gameId] = game
-		// io.emit('game-created', game)
+		io.emit('game-created', game)
 	})
 	socket.on('cancel-create-game', async () => {
 		// Remove game from the db by using users' socket id

@@ -55,40 +55,46 @@ io.on('connection', socket => {
 	console.log('User connected', socket.id)
 	socket.on('disconnect', () => {
 		console.log('User disconnected', socket.id)
+		cancelGame(socket.id)
 	})
 	socket.on('create-game', async data => {
-        console.log('Create game called by', socket.id)
+		console.log('create-game')
 		// gameId++
 		let lastGameId
-		// To get the last game ID
+		// 1. Get the last game ID
 		try {
-			lastGameId = await db.collection('games')
-				.find({}, {
-					gameId: true,
-				})
-				.sort({$natural: -1})
+			const lastItem = await db
+				.collection('games')
+				.find({})
+				.sort({ $natural: -1 })
 				.limit(1)
 				.next()
-			if (!lastGameId) lastGameId = 1
-			console.log('last game id', lastGameId)
+			if (!lastItem) lastGameId = 1
+			else {
+				lastGameId = lastItem.gameId
+			}
 		} catch (e) {
 			console.log('err', e)
 			return io.emit('user-error', "#11 Couldn't find the last game id")
 		}
-		// Check if the user has an existing game with the created status
+		// 2. Check if the user has an existing game with the created status, if so, delete it
 		try {
-			const existingGame = await db.collection('games')
-				.findOne({
+			const existingGame = await db.collection('games').findOne({
+				status: GAME_STATUS.CREATED,
+				'player1.account': data.account,
+			})
+			if (existingGame) {
+				await db.collection('games').deleteOne({
 					status: GAME_STATUS.CREATED,
+					'player1.account': data.account,
 				})
-			console.log('existing game', existingGame)
-			return io.emit('user-error', '#4 You already have a game created cancel it before creating a new one')
+			}
 		} catch (e) {}
 		if (!data.ytxBet || data.ytxBet == 0) {
 			return io.emit('user-error', '#1 The bet is empty')
 		}
-		if (!data.address || data.address.length == 0) {
-			return io.emit('user-error', '#3 The user address is empty')
+		if (!data.account || data.account.length == 0) {
+			return io.emit('user-error', '#3 The user account is empty')
 		}
 		// The new game to create
 		let game = {
@@ -99,7 +105,7 @@ io.on('connection', socket => {
 			created: Date.now(),
 			player1: {
 				turn: 0, // The current turn to know when is when
-				address: data.address,
+				account: data.account,
 				socketId: socket.id,
 				life: 100,
 				energy: 10,
@@ -107,14 +113,14 @@ io.on('connection', socket => {
 			},
 			player2: {
 				turn: 0,
-				address: '',
+				account: '',
 				socketId: '',
 				life: 100,
 				energy: 10,
 				field: [],
 			},
 		}
-		console.log('game', game)
+		// 3. Insert new game
 		try {
 			await db.collection('games').insertOne(game)
 		} catch (e) {
@@ -124,25 +130,14 @@ io.on('connection', socket => {
 				'#5 Error inserting user game in the database try again'
 			)
 		}
-		// games.push(game)
-		// gameMap[gameId] = game
 		io.emit('game-created', game)
 	})
 	socket.on('cancel-create-game', async () => {
-		// Remove game from the db by using users' socket id
-		try {
-			await db.collection('games').deleteOne({
-				player1: {
-					socketId: socket.id,
-				},
-			})
-		} catch (e) {
-			io.emit('user-error', '#9 Error deleting the game try again later')
-		}
+		cancelGame(socket.id)
 	})
 	socket.on('join-game', receivedGame => {
-		console.log('Join game called by', socket.id)
-		if (!hasExistingGame[receivedGame.address]) {
+		console.log('join-game')
+		if (!hasExistingGame[receivedGame.account]) {
 			return io.emit('user-error', "#6 The game doesn't exist anymore")
 		}
 		if (!gameMap[receivedGame.gameId]) {
@@ -155,7 +150,7 @@ io.on('connection', socket => {
 		gameMap[receivedGame.gameId].status = GAME_STATUS.STARTED
 		gameMap[receivedGame.gameId].player2 = {
 			turn: 0,
-			address: receivedGame.player2.address,
+			account: receivedGame.player2.account,
 			socketId: receivedGame.player2.socketId,
 			life: 100,
 			energy: 10,
@@ -169,7 +164,8 @@ io.on('connection', socket => {
 		return gameMap[receivedGame.gameId]
 	})
 	socket.on('update-game', receivedGame => {
-		if (!hasExistingGame[receivedGame.address]) {
+		console.log('update-game')
+		if (!hasExistingGame[receivedGame.account]) {
 			return io.emit('user-error', "#9 The game doesn't exist anymore")
 		}
 		if (!gameMap[receivedGame.gameId]) {
@@ -195,6 +191,22 @@ io.on('connection', socket => {
 		return gameMap[receivedGame.gameId]
 	})
 })
+
+const cancelGame = async socketId => {
+	console.log('cancel-create-game')
+	// Remove game from the db by using users' socket id only if the game is unstarted
+	try {
+		// Note that subfields, i.e. nested objects must be searched with the dot notation if the nested object has many fields and you're only interested in one
+		await db.collection('games').deleteOne({
+			status: GAME_STATUS.CREATED,
+			'player1.socketId': socketId,
+		})
+		io.emit('game-deleted-successfully')
+	} catch (e) {
+		console.log('error', e)
+		io.emit('user-error', '#9 Error deleting the game try again later')
+	}
+}
 
 const endGame = () => {}
 

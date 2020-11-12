@@ -4,14 +4,14 @@ import { store } from './Store'
 export default () => {
 	const { state, dispatch } = useContext(store)
 	const [gameName, setGameName] = useState('Game')
-  const [isWaiting, setIsWaiting] = useState(false)
-  
-  useEffect(() => {
-    // When the user leaves, cancel any existing games
-    window.addEventListener('beforeunload', () => {
-      state.socket.emit('cancel-create-game')
-    })
-  }, [])
+	const [isWaiting, setIsWaiting] = useState(false)
+
+	useEffect(() => {
+		// When the user leaves, cancel any existing games
+		window.addEventListener('beforeunload', () => {
+			state.socket.emit('cancel-create-game')
+		})
+	}, [])
 
 	const createGame = async () => {
 		setIsWaiting(false)
@@ -30,39 +30,45 @@ export default () => {
 				},
 			})
 		}
-		state.socket.emit('create-game', {
+		const gameData = {
 			ytxBet: state.ytxBet,
 			account: state.account,
 			gameName,
-		})
+		}
+		state.socket.emit('create-game', gameData)
 		setIsWaiting(true)
-  }
-  
-  const cancelCreateGame = async () => {
-    // It detects the game created by the socket id and cancels that one
-    state.socket.emit('cancel-create-game')
-    setIsWaiting(true)
-  }
+	}
+
+	const cancelCreateGame = async () => {
+		// It detects the game created by the socket id and cancels that one
+		state.socket.emit('cancel-create-game')
+		setIsWaiting(true)
+	}
 
 	return (
 		<div className='page welcome-page'>
 			<h1>Create a game</h1>
-      <div className={isWaiting ? 'link-container' : 'hidden'}>
-        <b className={isWaiting ? 'hidden' : ''}>
-          The game will start automatically as soon as someone joins your game.
-          <br /><br />
-          Waiting for players...
-          <br />
-        </b>
-        <button type="button" className='boxy-link' onClick={() => cancelCreateGame()}>
+			<div className={isWaiting ? 'link-container' : 'hidden'}>
+				<b className={isWaiting ? 'hidden' : ''}>
+					The game will start automatically as soon as someone joins your game.
+					<br />
+					<br />
+					Waiting for players...
+					<br />
+				</b>
+				<button
+					type='button'
+					className='boxy-link'
+					onClick={() => cancelCreateGame()}
+				>
 					Cancel Game
 				</button>
-      </div>
+			</div>
 			<div className={isWaiting ? 'hidden' : 'link-container'}>
-        <p>
-          Set how many YTX you want to bet for the game, press the button below to
-          create a game.
-        </p>
+				<p>
+					Set how many YTX you want to bet for the game, press the button below
+					to create a game.
+				</p>
 				<input
 					type='text'
 					className='margin-bot'
@@ -84,7 +90,11 @@ export default () => {
 						})
 					}}
 				/>
-				<button type="button" className='boxy-link' onClick={() => createGame()}>
+				<button
+					type='button'
+					className='boxy-link'
+					onClick={() => createGame()}
+				>
 					Create
 				</button>
 			</div>

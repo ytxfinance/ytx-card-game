@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect, useContext, useState } from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch, useHistory } from 'react-router-dom'
 import WelcomePage from './components/WelcomePage'
@@ -12,6 +12,9 @@ import './index.styl'
 
 const App = () => {
 	const { state, dispatch } = useContext(store)
+	const [showError, setShowError] = useState(false)
+	const [showSuccess, setShowSuccess] = useState(false)
+	const [showTimeout, setShowTimeout] = useState(null)
 	const history = useHistory()
 
 	useEffect(() => {
@@ -30,17 +33,37 @@ const App = () => {
 		}
 	}, [state.socket])
 
+	const showSuccessMessage = () => {
+		window.clearTimeout(showTimeout)
+		setShowSuccess(true)
+		const timeout = setTimeout(() => {
+			setShowSuccess(false)
+		}, 3e3)
+		setShowTimeout(timeout)
+	}
+
+	const showErrorMessage = () => {
+		window.clearTimeout(showTimeout)
+		setShowError(true)
+		const timeout = setTimeout(() => {
+			setShowError(false)
+		}, 3e3)
+		setShowTimeout(timeout)
+	}
+
 	const setListeners = () => {
 		state.socket.on('player-two-joined', () => {
-			// redirectTo(history, '/game')
+			history.push('/game')
 		})
-		state.socket.on('user-error', data => {
+		state.socket.on('game-deleted-successfully', () => {
 			dispatch({
-				type: 'SET_ERROR',
+				type: 'SET_SUCCESS',
 				payload: {
-					error: data,
-				},
+					success: 'Game deleted successfully'
+				}
 			})
+			history.push('/')
+			showSuccessMessage()
 		})
 		state.socket.on('game-created', () => {
 			dispatch({
@@ -49,6 +72,16 @@ const App = () => {
 					success: 'Game created successfully'
 				}
 			})
+			showSuccessMessage()
+		})
+		state.socket.on('user-error', data => {
+			dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: data,
+				},
+			})
+			showErrorMessage()
 		})
 	}
 
@@ -101,10 +134,10 @@ const App = () => {
 
 	return (
 		<div>
-			<p className={!state.success ? 'hidden' : 'success-message'}>
+			<p className={showSuccess ? 'success-message' : 'hidden'}>
 				{state.success}
 			</p>
-			<p className={!state.error ? 'hidden' : 'error-message'}>
+			<p className={showError ? 'error-message' : 'hidden'}>
 				{state.error}
 			</p>
 			<Switch>

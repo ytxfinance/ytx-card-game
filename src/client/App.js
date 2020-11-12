@@ -30,6 +30,7 @@ const App = () => {
 				},
 			})
 			setListeners()
+			getGameList()
 		}
 	}, [state.socket])
 
@@ -83,9 +84,17 @@ const App = () => {
 			})
 			showErrorMessage()
 		})
+		state.socket.on('receive-game-list', games => {
+			console.log('games', games)
+		})
+	}
+
+	const getGameList = () => {
+		state.socket.emit('get-game-list')
 	}
 
 	const setup = async () => {
+		const socket = io()
 		if (window.ethereum) {
 			ethereum.autoRefreshOnNetworkChange = true
 			window.myWeb3 = new Web3(ethereum)
@@ -102,6 +111,7 @@ const App = () => {
 						account: ethereum.selectedAddress,
 					},
 				})
+				socket.emit('set-account', ethereum.selectedAddress)
 			} catch (error) {
 				alert(
 					'You must approve this dApp to interact with it, reload and try again'
@@ -116,6 +126,7 @@ const App = () => {
 					account: accounts[0],
 				},
 			})
+			socket.emit('set-account', accounts[0])
 		} else {
 			console.log(
 				'Non-Ethereum browser detected. You should consider trying MetaMask!'
@@ -127,7 +138,7 @@ const App = () => {
 		dispatch({
 			type: 'SET_SOCKET',
 			payload: {
-				socket: io(),
+				socket,
 			},
 		})
 	}

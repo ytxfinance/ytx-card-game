@@ -51,8 +51,9 @@ app.get('*', (req, res) => {
 	return res.sendFile(path.join(__dirname, '../../dist/index.html'))
 })
 
-io.on('connection', socket => {
+io.on('connection', async socket => {
 	console.log('User connected', socket.id)
+
 	socket.on('disconnect', () => {
 		console.log('User disconnected', socket.id)
 		cancelGame(socket.id)
@@ -190,16 +191,42 @@ io.on('connection', socket => {
 		}
 		return gameMap[receivedGame.gameId]
 	})
+	socket.on('get-game-list', async () => {
+		console.log('get-game-list')
+		try {
+			// Send the non-started games
+			const gameList = await db
+				.collection('games')
+				.find({
+					status: GAME_STATUS.CREATED,
+				})
+				.toArray()
+			io.emit('receive-game-list', gameList)
+		} catch (e) {
+			return io.emit('user-error', '#13 Error getting the game list, try again')
+		}
+	})
+	socket.on('set-account', async account => {
+		try {
+			await db.collection('users').insertOne({
+				socket: socket.id,
+				account,
+			})
+		} catch (e) {}
+	})
 })
 
 const cancelGame = async socketId => {
 	console.log('cancel-create-game')
 	// Remove game from the db by using users' socket id only if the game is unstarted
 	try {
+		const gamesWithUserAccount = await db.collection('users').find({
+			socket: socketId,
+		}).toArray()
 		// Note that subfields, i.e. nested objects must be searched with the dot notation if the nested object has many fields and you're only interested in one
-		await db.collection('games').deleteOne({
+		await db.collection('games').deleteMany({
 			status: GAME_STATUS.CREATED,
-			'player1.socketId': socketId,
+			'player1.account': gamesWithUserAccount[0].account,
 		})
 		io.emit('game-deleted-successfully')
 	} catch (e) {

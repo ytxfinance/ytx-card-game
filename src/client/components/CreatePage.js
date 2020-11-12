@@ -49,11 +49,11 @@ export default () => {
 		<div className='page welcome-page'>
 			<h1>Create a game</h1>
 			<div className={isWaiting ? 'link-container' : 'hidden'}>
-				<b className={isWaiting ? 'hidden' : ''}>
+				<b className={isWaiting ? '' : 'hidden'}>
 					The game will start automatically as soon as someone joins your game.
 					<br />
-					<br />
 					Waiting for players...
+					<br />
 					<br />
 				</b>
 				<button

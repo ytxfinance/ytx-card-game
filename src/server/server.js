@@ -7,7 +7,6 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
-const deepEqual = require('deep-equal')
 const database = require('./database')
 let db = {}
 const port = 8000
@@ -17,12 +16,7 @@ const port = 8000
 // Player 2 selects a game from the list, pays the YTX bet and joins it
 // Game starts
 
-let contractAddress
-let gameId = 0
-// The game list of unstarted games to allow people to join
-let games = []
-// A mapping for gameId -> game
-let gameMap = {}
+let contractAddressx
 const GAME_STATUS = {
 	CREATED: 'CREATED',
 	STARTED: 'STARTED',
@@ -192,7 +186,6 @@ io.on('connection', async socket => {
 		return gameMap[receivedGame.gameId]
 	})
 	socket.on('get-game-list', async () => {
-		console.log('get-game-list')
 		try {
 			// Send the non-started games
 			const gameList = await db

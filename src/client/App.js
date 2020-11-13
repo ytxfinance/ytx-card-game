@@ -31,6 +31,7 @@ const App = () => {
 			})
 			setListeners()
 			getGameList()
+			setInterval(getGameList, 3e3)
 		}
 	}, [state.socket])
 
@@ -85,7 +86,12 @@ const App = () => {
 			showErrorMessage()
 		})
 		state.socket.on('receive-game-list', games => {
-			console.log('games', games)
+			dispatch({
+				type: 'SET_GAME_LIST',
+				payload: {
+					gameList: games,
+				}
+			})
 		})
 	}
 
@@ -155,54 +161,26 @@ const App = () => {
 				<Route
 					path='/'
 					exact
-					render={context => (
-						<WelcomePage
-							history={context.history}
-							redirectTo={(history, location) => {
-								redirectTo(history, location)
-							}}
-							socket={state.socket}
-						/>
+					render={() => (
+						<WelcomePage />
 					)}
 				/>
 				<Route
 					path='/create'
-					render={context => (
-						<CreatePage
-							account={state.account}
-							history={context.history}
-							redirectTo={(history, location) => {
-								redirectTo(history, location)
-							}}
-							socket={state.socket}
-						/>
+					render={() => (
+						<CreatePage />
 					)}
 				/>
 				<Route
 					path='/join'
-					render={context => (
-						<JoinPage
-							account={state.account}
-							history={context.history}
-							redirectTo={(history, location) => {
-								redirectTo(history, location)
-							}}
-							socket={socket}
-						/>
+					render={() => (
+						<JoinPage />
 					)}
 				/>
 				<Route
 					path='/game'
-					render={context => (
-						<GamePage
-							account={state.account}
-							setupComplete={state.setupComplete}
-							history={context.history}
-							redirectTo={(history, location) => {
-								redirectTo(history, location)
-							}}
-							socket={state.socket}
-						/>
+					render={() => (
+						<GamePage />
 					)}
 				/>
 				<Route render={() => (

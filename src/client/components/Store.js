@@ -9,6 +9,7 @@ const initialState = {
     ytxBet: 0,
     redirect: null,
     gameList: [],
+    game: {},
 }
 const store = createContext(initialState)
 const { Provider } = store
@@ -17,6 +18,13 @@ const StateProvider = ({ children }) => {
     const [state, dispatch] = useReducer((state, action) => {
         let newState
         switch (action.type) {
+            case 'SET_GAME':
+                console.log('set game')
+                newState = {
+                    ...state,
+                    game: action.payload.game,
+                }
+                return newState
             case 'SET_GAME_LIST':
                 console.log('set game list')
                 newState = {

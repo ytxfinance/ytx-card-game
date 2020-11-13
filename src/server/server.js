@@ -16,7 +16,8 @@ const port = 8000
 // Player 2 selects a game from the list, pays the YTX bet and joins it
 // Game starts
 
-let contractAddressx
+let contractAddress
+let activeSockets = []
 const GAME_STATUS = {
 	CREATED: 'CREATED',
 	STARTED: 'STARTED',
@@ -47,9 +48,12 @@ app.get('*', (req, res) => {
 
 io.on('connection', async socket => {
 	console.log('User connected', socket.id)
+	activeSockets.push(socket)
 
 	socket.on('disconnect', () => {
 		console.log('User disconnected', socket.id)
+		const position = activeSockets.map(soc => soc.id).indexOf(socket.id)
+		activeSockets.splice(position, 1)
 		cancelGame(socket.id)
 	})
 	socket.on('create-game', async data => {
@@ -130,33 +134,29 @@ io.on('connection', async socket => {
 	socket.on('cancel-create-game', async () => {
 		cancelGame(socket.id)
 	})
-	socket.on('join-game', receivedGame => {
+	socket.on('join-game', async data => {
 		console.log('join-game')
-		if (!hasExistingGame[receivedGame.account]) {
-			return io.emit('user-error', "#6 The game doesn't exist anymore")
+		let game
+		// Find the game and update it
+		try {
+			game = await db.collection('games').findOneAndUpdate({
+				status: GAME_STATUS.CREATED,
+				gameId: data.gameId,
+			}, {
+				$set: {
+					status: GAME_STATUS.STARTED,
+					'player2.account': data.account,
+					'player2.socketId': socket.id,
+				},
+			})
+			if (!game.value) {
+				return io.emit('user-error', '#14 Game not found')
+			}
+		} catch (e) {
+			return io.emit('user-error', '#8 Error updating the game with the second player')
 		}
-		if (!gameMap[receivedGame.gameId]) {
-			return io.emit('user-error', '#7 Game not found')
-		}
-		// Check if the game player1 is right from the received object
-		if (gameMap[receivedGame.gameId].player1.deepEqual(receivedGame.player1)) {
-			return io.emit('user-error', '#8 The received game object is not valid')
-		}
-		gameMap[receivedGame.gameId].status = GAME_STATUS.STARTED
-		gameMap[receivedGame.gameId].player2 = {
-			turn: 0,
-			account: receivedGame.player2.account,
-			socketId: receivedGame.player2.socketId,
-			life: 100,
-			energy: 10,
-			field: [],
-		}
-		const positionToRemove = games
-			.map(item => item.gameId)
-			.indexOf(receivedGame.gameId)
-		// Remove the item to update the active games
-		games.splice(positionToRemove, 1)
-		return gameMap[receivedGame.gameId]
+		socket.emit('player-joined', game.value)
+		io.to(game.value.player1.socketId).emit('player-joined', game.value)
 	})
 	socket.on('update-game', receivedGame => {
 		console.log('update-game')
@@ -186,6 +186,9 @@ io.on('connection', async socket => {
 		return gameMap[receivedGame.gameId]
 	})
 	socket.on('get-game-list', async () => {
+		// Check the innactive socket ids and delete those
+		await removeInactiveGames()
+
 		try {
 			// Send the non-started games
 			const gameList = await db
@@ -208,6 +211,25 @@ io.on('connection', async socket => {
 		} catch (e) {}
 	})
 })
+
+const removeInactiveGames = async () => {
+	try {
+		const createdGames = await db.collection('games').find({
+			status: GAME_STATUS.CREATED
+		}).toArray()
+		// Check if the pending games have active socket users or not and delete them
+		createdGames.map(async game => {
+			const position = activeSockets.map(soc => soc.id).indexOf(game.player1.socketId)
+			if (position == -1) {
+				try {
+					await db.collection('games').deleteOne(game)
+				} catch (e) {}
+			}
+		})
+	} catch (e) {
+		console.log('Err removing innactive games', e)
+	}
+}
 
 const cancelGame = async socketId => {
 	console.log('cancel-create-game')

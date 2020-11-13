@@ -4,6 +4,14 @@ import { store } from './Store'
 export default () => {
     const { state, dispatch } = useContext(store)
 
+    const joinGame = gameId => {
+        console.log('join game', gameId)
+        state.socket.emit('join-game', {
+            account: state.account,
+            gameId,
+        })
+    }
+
     return (
         <ul className="game-list-container">
             {!state.gameList || state.gameList.length == 0 ? (
@@ -12,7 +20,7 @@ export default () => {
                 <li key={item.gameId} className="game-list-item">
                     <b>{item.gameName}</b>
                     <span>{item.ytxBet} YTX</span>
-                    <button type="button">Join</button>
+                    <button type="button" onClick={() => joinGame(item.gameId)}>Join</button>
                 </li>
             ))}
         </ul>

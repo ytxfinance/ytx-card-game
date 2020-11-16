@@ -10,6 +10,13 @@ const initialState = {
     redirect: null,
     gameList: [],
     game: {},
+    playerNumber: 1, // Can be player 1 or player 2
+    attackingCardId: 0,
+    isAttackMode: false,
+    isOtherPlayerTurn: false,
+    enemyHand: [],
+    allyHand: [],
+    gameOver: false,
 }
 const store = createContext(initialState)
 const { Provider } = store
@@ -18,6 +25,42 @@ const StateProvider = ({ children }) => {
     const [state, dispatch] = useReducer((state, action) => {
         let newState
         switch (action.type) {
+            case 'SET_IS_OTHER_PLAYER_TURN':
+                console.log('set is other player turn')
+                newState = {
+                    ...state,
+                    isOtherPlayerTurn: action.payload.isOtherPlayerTurn,
+                }
+                return newState
+            case 'SET_GAME_OVER':
+                console.log('set game over')
+                newState = {
+                    ...state,
+                    gameOver: action.payload.gameOver,
+                }
+                return newState
+            case 'SET_ATTACK_MODE':
+                console.log('set attack mode')
+                newState = {
+                    ...state,
+                    isAttackMode: action.payload.isAttackMode,
+                }
+                return newState
+            case 'SET_HAND_CARDS':
+                console.log('set hand cards')
+                newState = {
+                    ...state,
+                    enemyHand: action.payload.enemyHand,
+                    allyHand: action.payload.allyHand,
+                }
+                return newState
+            case 'SET_PLAYER_NUMBER':
+                console.log('set player number')
+                newState = {
+                    ...state,
+                    playerNumber: action.payload.playerNumber,
+                }
+                return newState
             case 'SET_GAME':
                 console.log('set game')
                 newState = {

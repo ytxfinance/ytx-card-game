@@ -1,5 +1,6 @@
 require('dotenv-safe').config()
 
+const GAME_CONFIG = require('../../GAME_CONFIG.json')
 const { MONGO_URL } = process.env
 const express = require('express')
 const app = express()
@@ -24,6 +25,17 @@ const GAME_STATUS = {
 	ENDED: 'ENDED',
 	CANCELLED: 'CANCELLED',
 }
+
+// Cards have each 4 parameters: cost, life, attack, type we'll store them as
+// objects and convert them to arrays in the hashing function
+// Global variales not needed for the hashed messages
+const globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
+const globalMinAttack = GAME_CONFIG.minCardAttack
+const globalMaxAttack = GAME_CONFIG.maxCardAttack
+const globalMinLife = GAME_CONFIG.minCardLife
+const globalMaxLife = GAME_CONFIG.maxCardLife
+const enemyLastCardId = GAME_CONFIG.initialCardsInHand
+const lastEnergy = GAME_CONFIG.initialEnergy
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -54,27 +66,26 @@ io.on('connection', async socket => {
 		console.log('User disconnected', socket.id)
 		const position = activeSockets.map(soc => soc.id).indexOf(socket.id)
 		activeSockets.splice(position, 1)
-		cancelGame(socket.id)
+		cancelGame(socket)
 	})
 	socket.on('create-game', async data => {
-		console.log('create-game')
-		// gameId++
+		console.log('create-game BY', socket.id)
 		let lastGameId
 		// 1. Get the last game ID
 		try {
-			const lastItem = await db
+			const item = await db
 				.collection('games')
 				.find({})
 				.sort({ $natural: -1 })
 				.limit(1)
 				.next()
-			if (!lastItem) lastGameId = 1
+			if (!item) lastGameId = 1
 			else {
-				lastGameId = lastItem.gameId
+				lastGameId = ++item.gameId
 			}
 		} catch (e) {
 			console.log('err', e)
-			return io.emit('user-error', "#11 Couldn't find the last game id")
+			return socket.emit('user-error', "#11 Couldn't find the last game id")
 		}
 		// 2. Check if the user has an existing game with the created status, if so, delete it
 		try {
@@ -90,10 +101,10 @@ io.on('connection', async socket => {
 			}
 		} catch (e) {}
 		if (!data.ytxBet || data.ytxBet == 0) {
-			return io.emit('user-error', '#1 The bet is empty')
+			return socket.emit('user-error', '#1 The bet is empty')
 		}
 		if (!data.account || data.account.length == 0) {
-			return io.emit('user-error', '#3 The user account is empty')
+			return socket.emit('user-error', '#3 The user account is empty')
 		}
 		// The new game to create
 		let game = {
@@ -106,17 +117,19 @@ io.on('connection', async socket => {
 				turn: 0, // The current turn to know when is when
 				account: data.account,
 				socketId: socket.id,
-				life: 100,
-				energy: 10,
+				life: GAME_CONFIG.initialLife,
+				energy: GAME_CONFIG.initialEnergy,
 				field: [],
+				hand: [],
 			},
 			player2: {
 				turn: 0,
 				account: '',
 				socketId: '',
-				life: 100,
-				energy: 10,
+				life: GAME_CONFIG.initialLife,
+				energy: GAME_CONFIG.initialEnergy,
 				field: [],
+				hand: [],
 			},
 		}
 		// 3. Insert new game
@@ -124,66 +137,142 @@ io.on('connection', async socket => {
 			await db.collection('games').insertOne(game)
 		} catch (e) {
 			console.log('Error inserting new game', e)
-			return io.emit(
+			return socket.emit(
 				'user-error',
 				'#5 Error inserting user game in the database try again'
 			)
 		}
-		io.emit('game-created', game)
+		socket.emit('game-created', game)
 	})
 	socket.on('cancel-create-game', async () => {
-		cancelGame(socket.id)
+		cancelGame(socket)
 	})
 	socket.on('join-game', async data => {
-		console.log('join-game')
+		console.log('join-game BY', socket.id)
 		let game
 		// Find the game and update it
 		try {
+			console.log('game before', game)
+
+			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards()
 			game = await db.collection('games').findOneAndUpdate({
-				status: GAME_STATUS.CREATED,
 				gameId: data.gameId,
 			}, {
 				$set: {
 					status: GAME_STATUS.STARTED,
+					'player1.hand': cardsPlayer1,
+					'player2.hand': cardsPlayer2,
 					'player2.account': data.account,
 					'player2.socketId': socket.id,
 				},
+			}, {
+				// Return the updated one
+				returnOriginal: false,
 			})
 			if (!game.value) {
-				return io.emit('user-error', '#14 Game not found')
+				return socket.emit('user-error', '#14 Game not found')
 			}
 		} catch (e) {
-			return io.emit('user-error', '#8 Error updating the game with the second player')
+			return socket.emit('user-error', '#8 Error updating the game with the second player')
 		}
-		socket.emit('player-joined', game.value)
 		io.to(game.value.player1.socketId).emit('player-joined', game.value)
+		io.to(game.value.player2.socketId).emit('player-joined', game.value)
 	})
-	socket.on('update-game', receivedGame => {
+	socket.on('invoke-card', async data => {
+		// Check if users are still active
+		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
+		const playerNumber = getPlayerNumber(socket.id, data.game)
+		let updateData
+		if (!stillActive) return
+		if (playerNumber === 1) {
+			updateData = {
+				'player1.field': data.game.player1.field,
+				'player1.hand': data.game.player1.hand,
+			}
+		} else if (playerNumber === 2) {
+			updateData = {
+				'player2.field': data.game.player2.field,
+				'player2.hand': data.game.player2.hand,
+			}
+		} else {
+			return socket.emit('user-error', "#21 You aren't a player of this particular game")
+		}
+		try {
+			await db.collection('games').updateOne({
+				gameId: data.game.gameId,
+			}, { $set: updateData })
+		} catch (e) {
+			return socket.emit('user-error', '#22 Error updating the game data with the card invoke')
+		}
+		if (playerNumber === 1) {
+			io.to(data.game.player1.socketId).emit('invoke-player1', data.game)
+		} else {
+			io.to(data.game.player2.socketId).emit('invoke-player2', data.game)
+		}
+	})
+	socket.on('update-game', async data => {
+		// Update-game is an event that indicates a single change such as ending a turn,
+		// invoking a card, attacking directly or to the field or drawing a card
 		console.log('update-game')
-		if (!hasExistingGame[receivedGame.account]) {
-			return io.emit('user-error', "#9 The game doesn't exist anymore")
+		let game
+		try {
+			game = await db.collection('games').findOne({
+				status: GAME_STATUS.STARTED,
+				gameId: data.game.gameId,
+			})
+			if (!game) {
+				return socket.emit('user-error', '#16 Game not found with that id')
+			}
+		} catch (e) {
+			return socket.emit('user-error', '#17 Error searching for the game requested')
 		}
-		if (!gameMap[receivedGame.gameId]) {
-			return io.emit('user-error', '#10 Game not found')
+
+		// Check if users are still active
+		const stillActive = checkActiveSockets(game.player1.socketId, game.player2.socketId)
+		if (!stillActive) return
+		const playerNumber = getPlayerNumber(socket.id, game)
+		if (playerNumber === 0) {
+			return socket.emit('user-error', '#21 You are not a player of this particular game')
 		}
-		// Check if the game player1 is right from the received object
-		if (gameMap[receivedGame.gameId].player1.deepEqual(receivedGame.player1)) {
-			return io.emit('user-error', '#11 The received game object is not valid')
+
+		switch (data.action) {
+			// Invoke requires data.card that was invoked
+			case 'INVOKE_PLAYER1':
+				if (!data.card) return socket.emit('#20 You must send the card to invoke')
+				// Update game object, send the invoke event to the player 2
+				try {
+					await db.collection('games').updateOne(game, {
+						$set: {
+
+						}
+					})
+				} catch (e) {
+					return socket.emit('user-error', '#22 Error updating the game data')
+				}
+				io.to().emit('invoke-player1', data.card)
+				break
+			case 'INVOKE_PLAYER2':
+				if (!data.card) return socket.emit('#20 You must send the card to invoke')
+				// Update game object, send the invoke event to the player 2
+				socket.emit('invoke-player2', data.card)
+				break
+			case 'ATTACK_FIELD_PLAYER1_TO_PLAYER2':
+				break
+			case 'ATTACK_FIELD_PLAYER2_TO_PLAYER1':
+				break
+			case 'ATTACK_DIRECT_PLAYER1_TO_PLAYER2':
+				break
+			case 'ATTACK_DIRECT_PLAYER2_TO_PLAYER1':
+				break
+			case 'END_TURN_PLAYER1':
+				break
+			case 'END_TURN_PLAYER2':
+				break
+			case 'DRAW_PLAYER1':
+				break
+			case 'DRAW_PLAYER2':
+				break
 		}
-		if (gameMap[receivedGame.gameId].ytxBet == receivedGame.ytxbet) {
-			return io.emit('user-error', "#12 The bet isn't set properly")
-		}
-		gameMap[receivedGame.gameId].player1 = receivedGame.player1
-		gameMap[receivedGame.gameId].player2 = receivedGame.player2
-		if (receivedGame.player1.life == 0) {
-			// End game functionality,
-			// the server calls the contract to send the tokens to the winner
-			// and some to the loser if he got from the treasury
-		}
-		if (receivedGame.player2.life == 0) {
-			// End game functionality
-		}
-		return gameMap[receivedGame.gameId]
 	})
 	socket.on('get-game-list', async () => {
 		// Check the innactive socket ids and delete those
@@ -197,9 +286,9 @@ io.on('connection', async socket => {
 					status: GAME_STATUS.CREATED,
 				})
 				.toArray()
-			io.emit('receive-game-list', gameList)
+			socket.emit('receive-game-list', gameList)
 		} catch (e) {
-			return io.emit('user-error', '#13 Error getting the game list, try again')
+			return socket.emit('user-error', '#13 Error getting the game list, try again')
 		}
 	})
 	socket.on('set-account', async account => {
@@ -210,7 +299,67 @@ io.on('connection', async socket => {
 			})
 		} catch (e) {}
 	})
+	socket.on('end-turn', async data => {
+		// Check if users are still active
+		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
+		if (!stillActive) return
+		const playerNumber = getPlayerNumber(socket.id, data.game)
+		if (playerNumber === 0) {
+			return socket.emit('user-error', '#21 You are not a player of this particular game')
+		}
+		// Send start turn to the other player with the updated game
+		try {
+			await db.collection('games').findOneAndUpdate({
+				gameId: data.game.gameId,
+			}, {
+				$set: {
+					'player1.turn': data.game.player1.turn,
+					'player2.turn': data.game.player2.turn,
+				}
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#25 Error ending turn, try again')
+		}
+		// Send the start turn
+		if (playerNumber === 1) {
+			io.to(data.game.player2.socketId).emit('start-turn')
+		} else {
+			io.to(data.game.player1.socketId).emit('start-turn')
+		}
+	})
 })
+
+// Returns 0 if it's not any of them
+const getPlayerNumber = (socketId, game) => {
+	if (socketId === game.player1.socketId) {
+		return 1
+	} else if (socketId === game.player2.socketId) {
+		return 2
+	} else {
+		return 0
+	}
+}
+
+// Returns false if one or more are innactive
+const checkActiveSockets = (socketId1, socketId2) => {
+	const position = activeSockets.map(soc => soc.id).indexOf(socketId1)
+	const position2 = activeSockets.map(soc => soc.id).indexOf(socketId2)
+	console.log('socket1', socketId1)
+	console.log('socket2', socketId2)
+	if (position == -1) {
+		io.to(socketId1).emit('user-error', '#18 Player 1 left the game therefore player 2 wins')
+		io.to(socketId2).emit('user-error', '#18 Player 1 left the game therefore player 2 wins')
+		// TODO complete the game ending functionality by sending the rewards to the player 2
+		return false
+	}
+	if (position2 == -1) {
+		io.to(socketId1).emit('user-error', '#19 Player 2 left the game therefore player 1 wins')
+		io.to(socketId2).emit('user-error', '#19 Player 2 left the game therefore player 1 wins')
+		// TODO complete the game ending functionality by sending the rewards to the player 1
+		return false
+	}
+	return true
+}
 
 const removeInactiveGames = async () => {
 	try {
@@ -231,12 +380,12 @@ const removeInactiveGames = async () => {
 	}
 }
 
-const cancelGame = async socketId => {
+const cancelGame = async socket => {
 	console.log('cancel-create-game')
 	// Remove game from the db by using users' socket id only if the game is unstarted
 	try {
 		const gamesWithUserAccount = await db.collection('users').find({
-			socket: socketId,
+			socket: socket.id,
 		}).toArray()
 		if (gamesWithUserAccount > 0) {
 			// Note that subfields, i.e. nested objects must be searched with the dot notation if the nested object has many fields and you're only interested in one
@@ -245,11 +394,72 @@ const cancelGame = async socketId => {
 				'player1.account': gamesWithUserAccount[0].account,
 			})
 		}
-		io.emit('game-deleted-successfully')
+		socket.emit('game-deleted-successfully')
 	} catch (e) {
 		console.log('error', e)
-		io.emit('user-error', '#9 Error deleting the game try again later')
+		socket.emit('user-error', '#9 Error deleting the game try again later')
 	}
+}
+
+// Min and max inclusive both
+const randomRange = (min, max) => {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const generateInitialCards = () => {
+	let cardsPlayer1 = []
+	let cardsPlayer2 = []
+	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
+		let life = randomRange(globalMinLife, globalMaxLife)
+		let attack = randomRange(globalMinAttack, globalMaxAttack)
+		let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
+		// The cost is calculated based on the value of attack and life
+		// There's a minimum cost of 1
+		// Each point in life above 10 adds 0.5 cost
+		// Each point in attack above 5 adds 1 cost
+		// So a 18 life and 10 attack would cost 10 points
+		let addAttackPoints = 0
+		let addLifePoints = (life % 10 / 2)
+		if (attack >= 10) addAttackPoints = 5
+		else if (attack > 5) addAttackPoints = attack % 5
+		let cost = 1 + addLifePoints + addAttackPoints
+
+		let card = {
+			id: `card-${i + 1}`,
+			isInvoked: false,
+			canAttack: false,
+			cost,
+			life,
+			attack,
+			type
+		}
+		cardsPlayer1.push(card)
+	}
+
+	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
+		let life = randomRange(globalMinLife, globalMaxLife)
+		let attack = randomRange(globalMinAttack, globalMaxAttack)
+		let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
+		let addAttackPoints = 0
+		let addLifePoints = (life % 10 / 2)
+		if (attack >= 10) addAttackPoints = 5
+		else if (attack > 5) addAttackPoints = attack % 5
+		let cost = 1 + addLifePoints + addAttackPoints
+
+		let card = {
+			id: `card-${i + 1}`,
+			isInvoked: false,
+			canAttack: false,
+			cost,
+			life,
+			attack,
+			type
+		}
+		cardsPlayer2.push(card)
+	}
+	return { cardsPlayer1, cardsPlayer2 }
 }
 
 const endGame = () => {}

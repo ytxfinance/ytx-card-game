@@ -152,8 +152,6 @@ io.on('connection', async socket => {
 		let game
 		// Find the game and update it
 		try {
-			console.log('game before', game)
-
 			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards()
 			game = await db.collection('games').findOneAndUpdate({
 				gameId: data.gameId,

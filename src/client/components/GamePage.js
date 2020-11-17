@@ -2,20 +2,19 @@ import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
 import { store } from './Store'
-
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
 
 // The individual Card component
 const Card = props => {
     // If the card is ally, display the attack button or invoke, else don't display actions
     let buttonToDisplay
-    if(props.isInvoked && props.id[0] == 'A') {
+    if (props.isInvoked && props.id[0] == 'A') {
         buttonToDisplay = (
             <button disabled={!props.canAttack || props.turnEnded} onClick={() => {
                 props.toggleAttackMode(props)
             }}>Attack</button>
         )
-    } else if(props.id[0] == 'A') {
+    } else if (props.id[0] == 'A') {
         buttonToDisplay = (
             <button disabled={props.turnEnded} onClick={() => {
                 props.invokeCard(props)
@@ -135,16 +134,55 @@ export default () => {
 
     useEffect(() => {
         if (state.playerNumber === 2) {
+            const enemyHand = state.game.player1.hand.map(index => (
+                <div className="card" key={Math.random()}></div>
+            ))
+            const allyHand = generateHandCards(state.game.player2.hand)
             dispatch({
                 type: 'SET_IS_OTHER_PLAYER_TURN',
                 payload: {
                     isOtherPlayerTurn: true,
                 }
             })
+            dispatch({
+                type: 'SET_HAND_CARDS',
+                payload: {
+                    enemyHand,
+                    allyHand,
+                }
+            })
+        } else {
+            const enemyHand = state.game.player2.hand.map(index => (
+                <div className="card" key={Math.random()}></div>
+            ))
+            const allyHand = generateHandCards(state.game.player1.hand)
+            dispatch({
+                type: 'SET_HAND_CARDS',
+                payload: {
+                    enemyHand,
+                    allyHand,
+                }
+            })
         }
 
         setListeners()
     }, [])
+
+    const generateHandCards = handCards => {
+        let cards = handCards.length > 0 ? handCards.map(card => (
+            <Card
+                {...card}
+                key={card.id}
+                dataId={card.id}
+                turnEnded={state.isOtherPlayerTurn}
+                // invokeCard={propsCard => invokeCard(propsCard, state.playerNumber === 1 ? state.game.player1 : state.game.player2)}
+                // toggleAttackMode={propsCard => {
+                //     toggleAttackMode(propsCard)
+                // }}
+            />
+        )) : [(<div className="card" key={Math.random()}></div>)]
+        return cards
+     }
 
     const setListeners = () => {
         state.socket.on('start-turn', () => {
@@ -154,7 +192,6 @@ export default () => {
                     isOtherPlayerTurn: false,
                 }
             })
-            alert('my turn starts')
         })
     }
 
@@ -180,7 +217,6 @@ export default () => {
         state.socket.emit('end-turn', {
             game,
         })
-        alert('my turn ends')
     }
 
     return (

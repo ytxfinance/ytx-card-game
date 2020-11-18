@@ -14,8 +14,8 @@ const initialState = {
     attackingCardId: 0,
     isAttackMode: false,
     isOtherPlayerTurn: false,
-    enemyHand: [],
-    allyHand: [],
+    visualEnemyHand: [],
+    visualAllyHand: [],
     gameOver: false,
 }
 const store = createContext(initialState)
@@ -25,6 +25,13 @@ const StateProvider = ({ children }) => {
     const [state, dispatch] = useReducer((state, action) => {
         let newState
         switch (action.type) {
+            case 'SET_ALLY_HAND':
+                console.log('set ally hand')
+                newState = {
+                    ...state,
+                    visualAllyHand: action.payload.visualAllyHand,
+                }
+                return newState
             case 'SET_IS_OTHER_PLAYER_TURN':
                 console.log('set is other player turn')
                 newState = {
@@ -50,8 +57,8 @@ const StateProvider = ({ children }) => {
                 console.log('set hand cards')
                 newState = {
                     ...state,
-                    enemyHand: action.payload.enemyHand,
-                    allyHand: action.payload.allyHand,
+                    visualEnemyHand: action.payload.visualEnemyHand,
+                    visualAllyHand: action.payload.visualAllyHand,
                 }
                 return newState
             case 'SET_PLAYER_NUMBER':
@@ -119,7 +126,7 @@ const StateProvider = ({ children }) => {
                 return newState
             default:
                 console.log('default state')
-                return _state
+                return state
         }
     }, initialState)
     return (

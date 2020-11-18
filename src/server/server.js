@@ -325,6 +325,66 @@ io.on('connection', async socket => {
 			io.to(data.game.player1.socketId).emit('start-turn')
 		}
 	})
+	socket.on('draw-card', async data => {
+		console.log('draw hand BY', socket.id)
+		// Check if users are still active
+		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
+		if (!stillActive) return
+		const playerNumber = getPlayerNumber(socket.id, data.game)
+		const newCard = generateOneCard(Math.random()+1)
+		let copyHand = []
+		let updatedGame
+		try {
+			updatedGame = await db.collection('games').findOne({
+				gameId: data.game.gameId,
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#28 Game not found from the given game ID')
+		}
+		if (playerNumber === 0) {
+			return socket.emit('user-error', '#21 You are not a player of this particular game')
+		} else if (playerNumber === 1) {
+			copyHand = updatedGame.player1.hand.slice(0)
+			copyHand.push(newCard)
+			try {
+				updatedGame = await db.collection('games').findOneAndUpdate({
+					gameId: data.game.gameId,
+				}, {
+					$set: {
+						'player1.hand': copyHand,
+					},
+				}, {
+					returnOriginal: false,
+				})
+				updatedGame = updatedGame.value
+			} catch (e) {
+				return socket.emit('user-error', '#26 Error updating the player hand after drawing')
+			}
+			io.to(data.game.player1.socketId).emit('draw-card-received', {
+				game: updatedGame,
+			})
+		} else {
+			copyHand = updatedGame.player2.hand.slice(0)
+			copyHand.push(newCard)
+			try {
+				updatedGame = await db.collection('games').findOneAndUpdate({
+					gameId: data.game.gameId,
+				}, {
+					$set: {
+						'player2.hand': copyHand,
+					},
+				}, {
+					returnOriginal: false,
+				})
+				updatedGame = updatedGame.value
+			} catch (e) {
+				return socket.emit('user-error', '#27 Error updating the player hand after drawing')
+			}
+			io.to(data.game.player2.socketId).emit('draw-card-received', {
+				game: updatedGame,
+			})
+		}
+	})
 })
 
 // Returns 0 if it's not any of them
@@ -342,8 +402,6 @@ const getPlayerNumber = (socketId, game) => {
 const checkActiveSockets = (socketId1, socketId2) => {
 	const position = activeSockets.map(soc => soc.id).indexOf(socketId1)
 	const position2 = activeSockets.map(soc => soc.id).indexOf(socketId2)
-	console.log('socket1', socketId1)
-	console.log('socket2', socketId2)
 	if (position == -1) {
 		io.to(socketId1).emit('user-error', '#18 Player 1 left the game therefore player 2 wins')
 		io.to(socketId2).emit('user-error', '#18 Player 1 left the game therefore player 2 wins')
@@ -406,55 +464,43 @@ const randomRange = (min, max) => {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+const generateOneCard = index => {
+	let life = randomRange(globalMinLife, globalMaxLife)
+	let attack = randomRange(globalMinAttack, globalMaxAttack)
+	let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
+	// The cost is calculated based on the value of attack and life
+	// There's a minimum cost of 1
+	// Each point in life above 10 adds 0.5 cost
+	// Each point in attack above 5 adds 1 cost
+	// So a 18 life and 10 attack would cost 10 points
+	let addAttackPoints = 0
+	let addLifePoints = (life % 10 / 2)
+	if (attack >= 10) addAttackPoints = 5
+	else if (attack > 5) addAttackPoints = attack % 5
+	let cost = 1 + addLifePoints + addAttackPoints
+
+	let card = {
+		id: `card-${index + 1}`,
+		isInvoked: false,
+		canAttack: false,
+		cost,
+		life,
+		attack,
+		type
+	}
+	return card
+}
+
 const generateInitialCards = () => {
 	let cardsPlayer1 = []
 	let cardsPlayer2 = []
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		let life = randomRange(globalMinLife, globalMaxLife)
-		let attack = randomRange(globalMinAttack, globalMaxAttack)
-		let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
-		// The cost is calculated based on the value of attack and life
-		// There's a minimum cost of 1
-		// Each point in life above 10 adds 0.5 cost
-		// Each point in attack above 5 adds 1 cost
-		// So a 18 life and 10 attack would cost 10 points
-		let addAttackPoints = 0
-		let addLifePoints = (life % 10 / 2)
-		if (attack >= 10) addAttackPoints = 5
-		else if (attack > 5) addAttackPoints = attack % 5
-		let cost = 1 + addLifePoints + addAttackPoints
-
-		let card = {
-			id: `card-${i + 1}`,
-			isInvoked: false,
-			canAttack: false,
-			cost,
-			life,
-			attack,
-			type
-		}
+		const card = generateOneCard(i)
 		cardsPlayer1.push(card)
 	}
 
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		let life = randomRange(globalMinLife, globalMaxLife)
-		let attack = randomRange(globalMinAttack, globalMaxAttack)
-		let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
-		let addAttackPoints = 0
-		let addLifePoints = (life % 10 / 2)
-		if (attack >= 10) addAttackPoints = 5
-		else if (attack > 5) addAttackPoints = attack % 5
-		let cost = 1 + addLifePoints + addAttackPoints
-
-		let card = {
-			id: `card-${i + 1}`,
-			isInvoked: false,
-			canAttack: false,
-			cost,
-			life,
-			attack,
-			type
-		}
+		const card = generateOneCard(i)
 		cardsPlayer2.push(card)
 	}
 	return { cardsPlayer1, cardsPlayer2 }

@@ -3,18 +3,23 @@ import { Link } from 'react-router-dom'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
 import { store } from './Store'
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
+const MIN_CARD_LIFE = GAME_CONFIG.minCardLife
+const MAX_CARD_LIFE = GAME_CONFIG.maxCardLife
+const MAX_CARD_ATTACK = GAME_CONFIG.maxCardAttack
+const MIN_CARD_ATTACK = GAME_CONFIG.minCardAttack
+const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
 
 // The individual Card component
 const Card = props => {
     // If the card is ally, display the attack button or invoke, else don't display actions
     let buttonToDisplay
-    if (props.isInvoked && props.id[0] == 'A') {
+    if (props.isInvoked) {
         buttonToDisplay = (
             <button disabled={!props.canAttack || props.turnEnded} onClick={() => {
                 props.toggleAttackMode(props)
             }}>Attack</button>
         )
-    } else if (props.id[0] == 'A') {
+    } else {
         buttonToDisplay = (
             <button disabled={props.turnEnded} onClick={() => {
                 props.invokeCard(props)
@@ -72,14 +77,14 @@ const GameView = props => {
                     <p>
                         {state.playerNumber === 1
                             ? state.game.player2.life
-                            : state.game.player1.life}{' '}
-                        HP
+                            : state.game.player1.life}
+                        &nbsp;HP
                     </p>
                     <p>
                         {state.playerNumber === 1
                             ? state.game.player2.energy
-                            : state.game.player1.energy}{' '}
-                        Energy
+                            : state.game.player1.energy}
+                        &nbsp;Energy
                     </p>
                 </div>
                 <div className='my-stats'>
@@ -87,18 +92,18 @@ const GameView = props => {
                     <p>
                         {state.playerNumber === 1
                             ? state.game.player1.life
-                            : state.game.player2.life}{' '}
-                        HP
+                            : state.game.player2.life}
+                        &nbsp;HP
                     </p>
                     <p>
                         {state.playerNumber === 1
                             ? state.game.player1.energy
-                            : state.game.player2.energy}{' '}
-                        Energy
+                            : state.game.player2.energy}
+                        &nbsp;Energy
                     </p>
                 </div>
                 <div className='cards-container enemy-cards-container'>
-                    { state.enemyHand }
+                    { state.visualEnemyHand }
                 </div>
                 <div className='field'>
                     <div
@@ -113,7 +118,7 @@ const GameView = props => {
                     </div>
                 </div>
                 <div className='cards-container ally-cards-container'>
-                    { state.allyHand }
+                    { state.visualAllyHand }
                 </div>
                 <button
                     className='end-turn'
@@ -131,42 +136,47 @@ const GameView = props => {
 
 export default () => {
     const { state, dispatch } = useContext(store)
+    const [myLastCardId, setMyLastCardId] = useState(3)
 
     useEffect(() => {
         if (state.playerNumber === 2) {
-            const enemyHand = state.game.player1.hand.map(index => (
-                <div className="card" key={Math.random()}></div>
-            ))
-            const allyHand = generateHandCards(state.game.player2.hand)
             dispatch({
                 type: 'SET_IS_OTHER_PLAYER_TURN',
                 payload: {
                     isOtherPlayerTurn: true,
                 }
             })
+        }
+        setListeners()
+    }, [])
+
+    useEffect(() => {
+        if (state.playerNumber === 2) {
+            const visualEnemyHand = state.game.player1.hand.map(index => (
+                <div className="card" key={Math.random()}></div>
+            ))
+            const visualAllyHand = generateHandCards(state.game.player2.hand)
             dispatch({
                 type: 'SET_HAND_CARDS',
                 payload: {
-                    enemyHand,
-                    allyHand,
+                    visualEnemyHand,
+                    visualAllyHand,
                 }
             })
         } else {
-            const enemyHand = state.game.player2.hand.map(index => (
+            const visualEnemyHand = state.game.player2.hand.map(index => (
                 <div className="card" key={Math.random()}></div>
             ))
-            const allyHand = generateHandCards(state.game.player1.hand)
+            const visualAllyHand = generateHandCards(state.game.player1.hand)
             dispatch({
                 type: 'SET_HAND_CARDS',
                 payload: {
-                    enemyHand,
-                    allyHand,
+                    visualEnemyHand,
+                    visualAllyHand,
                 }
             })
         }
-
-        setListeners()
-    }, [])
+    }, [state.game])
 
     const generateHandCards = handCards => {
         let cards = handCards.length > 0 ? handCards.map(card => (
@@ -192,6 +202,15 @@ export default () => {
                     isOtherPlayerTurn: false,
                 }
             })
+            drawCard()
+        })
+        state.socket.on('draw-card-received', data => {
+            dispatch({
+                type: 'SET_GAME',
+                payload: {
+                    game: data.game,
+                }
+            })
         })
     }
 
@@ -199,8 +218,12 @@ export default () => {
         const game = { ...state.game }
         if (state.playerNumber === 1) {
             game.player1.turn++
+            // Add a fake card for visual purposes
+            game.player2.hand.push({})
         } else {
             game.player2.turn++
+            // Add a fake card for visual purposes
+            game.player1.hand.push({})
         }
         dispatch({
             type: 'SET_IS_OTHER_PLAYER_TURN',
@@ -216,6 +239,13 @@ export default () => {
         })
         state.socket.emit('end-turn', {
             game,
+        })
+    }
+
+    const drawCard = () => {
+        // We just check the socket id to determine which user is drawing
+        state.socket.emit('draw-card', {
+            game: state.game,
         })
     }
 

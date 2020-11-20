@@ -3,7 +3,7 @@
     "maxCardsInField": 5,
     "energyPerTurn": 1,
     "initialLife": 100,
-    "initialEnergy": 1,
+    "initialEnergy": 10,
     "initialCardsInHand": 3,
     "minCardAttack": 5,
     "maxCardAttack": 9,

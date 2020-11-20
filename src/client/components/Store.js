@@ -17,6 +17,8 @@ const initialState = {
     visualEnemyHand: [],
     visualAllyHand: [],
     gameOver: false,
+    enemyFieldHtml: null,
+    allyFieldHtml: null,
 }
 const store = createContext(initialState)
 const { Provider } = store
@@ -25,6 +27,14 @@ const StateProvider = ({ children }) => {
     const [state, dispatch] = useReducer((state, action) => {
         let newState
         switch (action.type) {
+            case 'SET_FIELDS':
+                console.log('set fields')
+                newState = {
+                    ...state,
+                    enemyFieldHtml: action.payload.enemyFieldHtml,
+                    allyFieldHtml: action.payload.allyFieldHtml,
+                }
+                return newState
             case 'SET_ALLY_HAND':
                 console.log('set ally hand')
                 newState = {
@@ -97,7 +107,7 @@ const StateProvider = ({ children }) => {
                 }
                 return newState
             case 'SET_ERROR':
-                console.log('set error')
+                console.log('set error', `"${action.payload.error}"`)
                 newState = {
                     ...state,
                     error: action.payload.error,

@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
+const deepEqual = require('deep-equal')
 const database = require('./database')
 let db = {}
 const port = 8000
@@ -302,18 +303,41 @@ io.on('connection', async socket => {
 		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
 		if (!stillActive) return
 		const playerNumber = getPlayerNumber(socket.id, data.game)
+		let updatedCanAttackField
+		let set = {
+			'player1.turn': data.game.player1.turn,
+			'player1.field': data.game.player1.field,
+			'player2.turn': data.game.player2.turn,
+			'player2.field': data.game.player2.field,
+		}
 		if (playerNumber === 0) {
 			return socket.emit('user-error', '#21 You are not a player of this particular game')
+		} else if (playerNumber === 1) {
+			updatedCanAttackField = data.game.player2.field.map(card => {
+				card.canAttack = true
+				return card
+			})
+			set = {
+				'player2.field': updatedCanAttackField,
+				'player2.energy': data.game.player2.energy + GAME_CONFIG.energyPerTurn,
+			}
+		} else {
+			updatedCanAttackField = data.game.player1.field.map(card => {
+				card.canAttack = true
+				return card
+			})
+			set = {
+				'player1.field': updatedCanAttackField,
+				'player1.energy': data.game.player1.energy + GAME_CONFIG.energyPerTurn,
+			}
 		}
+		// Update other player's field cards to set canAttack to true
 		// Send start turn to the other player with the updated game
 		try {
 			await db.collection('games').findOneAndUpdate({
 				gameId: data.game.gameId,
 			}, {
-				$set: {
-					'player1.turn': data.game.player1.turn,
-					'player2.turn': data.game.player2.turn,
-				}
+				$set: set,
 			})
 		} catch (e) {
 			return socket.emit('user-error', '#25 Error ending turn, try again')
@@ -331,7 +355,7 @@ io.on('connection', async socket => {
 		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
 		if (!stillActive) return
 		const playerNumber = getPlayerNumber(socket.id, data.game)
-		const newCard = generateOneCard(Math.random()+1)
+		const newCard = generateOneCard(Math.random()+1, playerNumber)
 		let copyHand = []
 		let updatedGame
 		try {
@@ -384,6 +408,66 @@ io.on('connection', async socket => {
 				game: updatedGame,
 			})
 		}
+	})
+	socket.on('invoke-card', async data => {
+		console.log('invoke card BY', socket.id)
+		// Check if users are still active
+		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
+		if (!stillActive) return
+		const playerNumber = getPlayerNumber(socket.id, data.game)
+		let updatedGame
+		try {
+			updatedGame = await db.collection('games').findOne({
+				gameId: data.game.gameId,
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#28 Game not found from the given game ID')
+		}
+		if (playerNumber === 0) {
+			return socket.emit('user-error', '#21 You are not a player of this particular game')
+		} else if (playerNumber === 1) {
+			// Remove card from hand
+			const cardHandIndex = updatedGame.player1.hand.findIndex(element => deepEqual(element, data.card))
+			updatedGame.player1.hand.splice(cardHandIndex, 1)
+			// Add card to field
+			updatedGame.player1.field.push(data.card)
+			// Reduce user energy or emit error if not enough energy to invoke
+			updatedGame.player1.energy -= data.card.cost
+			if (updatedGame.player1.energy < 0) {
+				return socket.emit('user-error', "#30 You don't have enough energy to invoke this card")
+			}
+		} else {
+			const cardHandIndex = updatedGame.player2.hand.findIndex(element => deepEqual(element, data.card))
+			updatedGame.player2.hand.splice(cardHandIndex, 1)
+			// Add card to field
+			updatedGame.player2.field.push(data.card)
+			// Reduce user energy or emit error if not enough energy to invoke
+			updatedGame.player2.energy -= data.card.cost
+			if (updatedGame.player2.energy < 0) {
+				return socket.emit('user-error', "#31 You don't have enough energy to invoke this card")
+			}
+		}
+		let final
+		try {
+			final = await db.collection('games').findOneAndUpdate({
+				gameId: data.game.gameId,
+			}, {
+				$set: {
+					player1: updatedGame.player1,
+					player2: updatedGame.player2,
+				}
+			}, {
+				returnOriginal: false,
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#29 Error updating the field with the invoked card')
+		}
+		io.to(data.game.player1.socketId).emit('card-invoke-received', {
+			game: final.value,
+		})
+		return io.to(data.game.player2.socketId).emit('card-invoke-received', {
+			game: final.value,
+		})
 	})
 })
 
@@ -464,7 +548,7 @@ const randomRange = (min, max) => {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const generateOneCard = index => {
+const generateOneCard = (index, playerNumberOwner) => {
 	let life = randomRange(globalMinLife, globalMaxLife)
 	let attack = randomRange(globalMinAttack, globalMaxAttack)
 	let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
@@ -486,7 +570,8 @@ const generateOneCard = index => {
 		cost,
 		life,
 		attack,
-		type
+		type,
+		playerNumberOwner,
 	}
 	return card
 }
@@ -495,12 +580,12 @@ const generateInitialCards = () => {
 	let cardsPlayer1 = []
 	let cardsPlayer2 = []
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		const card = generateOneCard(i)
+		const card = generateOneCard(i, 1)
 		cardsPlayer1.push(card)
 	}
 
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		const card = generateOneCard(i)
+		const card = generateOneCard(GAME_CONFIG.initialCardsInHand+i, 2)
 		cardsPlayer2.push(card)
 	}
 	return { cardsPlayer1, cardsPlayer2 }

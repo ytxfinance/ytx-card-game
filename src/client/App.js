@@ -35,23 +35,23 @@ const App = () => {
 		}
 	}, [state.socket])
 
-	const showSuccessMessage = () => {
-		window.clearTimeout(showTimeout)
-		setShowSuccess(true)
-		const timeout = setTimeout(() => {
-			setShowSuccess(false)
-		}, 3e3)
-		setShowTimeout(timeout)
-	}
-
-	const showErrorMessage = () => {
+	useEffect(() => {
 		window.clearTimeout(showTimeout)
 		setShowError(true)
 		const timeout = setTimeout(() => {
 			setShowError(false)
 		}, 3e3)
 		setShowTimeout(timeout)
-	}
+	}, [state.error])
+
+	useEffect(() => {
+		window.clearTimeout(showTimeout)
+		setShowSuccess(true)
+		const timeout = setTimeout(() => {
+			setShowSuccess(false)
+		}, 3e3)
+		setShowTimeout(timeout)
+	}, [state.success])
 
 	const setListeners = () => {
 		state.socket.on('player-two-joined', () => {
@@ -74,7 +74,6 @@ const App = () => {
 					success: 'Game created successfully'
 				}
 			})
-			showSuccessMessage()
 		})
 		state.socket.on('user-error', data => {
 			dispatch({
@@ -83,7 +82,6 @@ const App = () => {
 					error: data,
 				},
 			})
-			showErrorMessage()
 		})
 		state.socket.on('receive-game-list', games => {
 			dispatch({

@@ -543,6 +543,112 @@ export default () => {
 		})
 	}
 	
+	const attackDirectly = () => {
+		// TODO
+		console.log('Attack directly executed')
+		let ally = null
+		let enemy = null
+		let allyUpdatedField = []
+		let card
+		let updatedLife
+		if (state.playerNumber === 1) {
+			ally = state.game.player1
+			enemy = state.game.player2
+		} else {
+			ally = state.game.player2
+			enemy = state.game.player1
+		}
+
+		// Find card stats by searching in the field
+		ally.field.map(currentCard => {
+			if(currentCard.id == state.attackingCardId) {
+				card = currentCard
+			}
+		})
+		updatedLife = enemy.life - card.attack
+		ally.field.map(currentCard => {
+			if(currentCard.id == card.id) {
+				// Update the attacking card's property canAttack since you can only attack once per turn
+				currentCard.canAttack = false
+			}
+			allyUpdatedField.push(currentCard)
+		})
+
+		let game = { ...state.game }
+		if (state.playerNumber === 1) {
+			game.player1.field = allyUpdatedField
+			game.player2.life = updatedLife
+		} else {
+			game.player2.field = allyUpdatedField
+			game.player1.life = updatedLife
+		}
+
+		dispatch({
+			type: 'SET_GAME',
+			payload: {
+				game,
+			}
+		})
+		toggleAttackMode(0)
+
+		// Check if a winner is elected
+		state.socket.emit('attack-direct', {
+			game,
+		})
+
+		// this.setState({
+		// 	me: {
+		// 		hand: this.state.me.hand,
+		// 		life: this.state.me.life,
+		// 		field: allyUpdatedField,
+		// 		energy: this.state.me.energy,
+		// 	},
+		// 	enemy: {
+		// 		hand: this.state.enemy.hand,
+		// 		life: updatedLife <= 0 ? 0 : updatedLife,
+		// 		field: this.state.enemy.field,
+		// 		energy: this.state.enemy.energy,
+		// 	},
+		// 	isAttackMode: false,
+		// 	attackingCardId: 0,
+		// })
+	
+		// if(updatedLife <= 0) {
+		// 	// 2. Turn each card into bytes32 with the desired signature
+		// 	let allyBytes32FieldCards = await this.getEncryptedFields()
+	
+		// 	// 3. Finish the game by sending the final contract call to close the state channel
+		// 	const signedMessage = await this.signMessage(await this.generateHash())
+		// 	await this.props.contract.methods.verifyPlayerBalance(
+		// 		signedMessage,
+		// 		allyBytes32FieldCards,
+		// 		this.state.me.life,
+		// 		String(this.state.nonce),
+		// 		this.state.sequence,
+		// 		this.props.account,
+		// 	).send({
+		// 		from: this.props.account
+		// 	})
+	
+		// 	// 4. Show your winning message
+		// 	this.setState({
+		// 		winner: this.props.isThisPlayerOne ? 1 : 2,
+		// 		gameOver: true,
+		// 	})
+	
+		// 	// 5. Emmit the loss to the other player
+		// 	this.emitFinish({
+		// 		isThisPlayerOne: this.props.isThisPlayerOne,
+		// 	})
+		// } else {
+		// 	// Send a game over event if the ended life is zero after the attack
+		// 	this.emitDirectAttack({
+		// 		remainingLife: updatedLife,
+		// 		isThisPlayerOne: this.props.isThisPlayerOne,
+		// 	})
+		// }
+	}
+
 	return (
 		<GameView
 			// {...this.state}
@@ -550,6 +656,7 @@ export default () => {
 			// toggleAttackMode={card => toggleAttackMode(card)}
 			// attackDirectly={() => this.attackDirectly()}
 			// attackField={target => this.attackField(target)}
+			attackDirectly={() => attackDirectly()}
 			endTurn={() => endTurn()}
 		/>
 	)

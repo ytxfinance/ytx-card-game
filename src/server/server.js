@@ -512,6 +512,52 @@ io.on('connection', async socket => {
 			})
 		}
 	})
+	socket.on('attack-direct', async data => {
+		console.log('attack direct BY', socket.id)
+		// Check if users are still active
+		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
+		if (!stillActive) return
+		const playerNumber = getPlayerNumber(socket.id, data.game)
+		let updatedGame
+		let final
+		// Check if the game exists
+		try {
+			updatedGame = await db.collection('games').findOne({
+				gameId: data.game.gameId,
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#28 Game not found from the given game ID')
+		}
+		if (playerNumber === 0) {
+			return socket.emit('user-error', '#21 You are not a player of this particular game')
+		}
+		try {
+			final = await db.collection('games').findOneAndUpdate({
+				gameId: data.game.gameId,
+			}, {
+				$set: {
+					'player1.field': data.game.player1.field,
+					'player1.life': data.game.player1.life,
+					'player2.field': data.game.player2.field,
+					'player2.life': data.game.player2.life,
+				}
+			}, {
+				returnOriginal: false,
+			})
+		} catch (e) {
+			return socket.emit('user-error', '#31 Error updating the game data')
+		}
+
+		if (playerNumber === 1) {
+			io.to(data.game.player2.socketId).emit('attack-field-received', {
+				game: final.value,
+			})
+		} else {
+			io.to(data.game.player1.socketId).emit('attack-field-received', {
+				game: final.value,
+			})
+		}
+	})
 })
 
 // Returns 0 if it's not any of them
@@ -634,7 +680,10 @@ const generateInitialCards = () => {
 	return { cardsPlayer1, cardsPlayer2 }
 }
 
-const endGame = () => {}
+const endGame = () => {
+	// Send the winner emit event
+	// Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees
+}
 
 const start = async () => {
 	try {

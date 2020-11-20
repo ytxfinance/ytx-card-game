@@ -12,8 +12,6 @@ import './index.styl'
 
 const App = () => {
 	const { state, dispatch } = useContext(store)
-	const [showError, setShowError] = useState(false)
-	const [showSuccess, setShowSuccess] = useState(false)
 	const [showTimeout, setShowTimeout] = useState(null)
 	const history = useHistory()
 
@@ -37,21 +35,33 @@ const App = () => {
 
 	useEffect(() => {
 		window.clearTimeout(showTimeout)
-		setShowError(true)
-		const timeout = setTimeout(() => {
-			setShowError(false)
-		}, 3e3)
-		setShowTimeout(timeout)
-	}, [state.error])
+		if (state.showError) {
+			const timeout = setTimeout(() => {
+				dispatch({
+					type: 'SET_SHOW_ERROR',
+					payload: {
+						showError: false,
+					}
+				})
+			}, 3e3)
+			setShowTimeout(timeout)
+		}
+	}, [state.showError])
 
 	useEffect(() => {
 		window.clearTimeout(showTimeout)
-		setShowSuccess(true)
-		const timeout = setTimeout(() => {
-			setShowSuccess(false)
-		}, 3e3)
-		setShowTimeout(timeout)
-	}, [state.success])
+		if (state.showSuccess) {
+			const timeout = setTimeout(() => {
+				dispatch({
+					type: 'SET_SHOW_SUCCESS',
+					payload: {
+						showSuccess: false,
+					}
+				})
+			}, 3e3)
+			setShowTimeout(timeout)
+		}			
+	}, [state.showSuccess])
 
 	const setListeners = () => {
 		state.socket.on('player-two-joined', () => {
@@ -159,10 +169,10 @@ const App = () => {
 
 	return (
 		<div>
-			<p className={showSuccess ? 'success-message' : 'hidden'}>
+			<p className={state.showSuccess ? 'success-message' : 'hidden'}>
 				{state.success}
 			</p>
-			<p className={showError ? 'error-message' : 'hidden'}>
+			<p className={state.showError ? 'error-message' : 'hidden'}>
 				{state.error}
 			</p>
 			<Switch>

@@ -6,6 +6,8 @@ const initialState = {
     socket: null,
     error: '',
     success: '',
+    showError: false,
+    showSuccess: false,
     ytxBet: 0,
     redirect: null,
     gameList: [],
@@ -104,6 +106,21 @@ const StateProvider = ({ children }) => {
                 newState = {
                     ...state,
                     success: action.payload.success,
+                    showSuccess: true,
+                }
+                return newState
+            case 'SET_SHOW_ERROR':
+                console.log('set show error')
+                newState = {
+                    ...state,
+                    showError: action.payload.showError,
+                }
+                return newState
+            case 'SET_SHOW_SUCCESS':
+                console.log('set show success')
+                newState = {
+                    ...state,
+                    showSuccess: action.payload.showSuccess,
                 }
                 return newState
             case 'SET_ERROR':
@@ -111,6 +128,7 @@ const StateProvider = ({ children }) => {
                 newState = {
                     ...state,
                     error: action.payload.error,
+                    showError: true,
                 }
                 return newState
             case 'SET_SOCKET':

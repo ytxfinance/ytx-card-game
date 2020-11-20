@@ -21,7 +21,7 @@ const Card = props => {
 			<button
 				disabled={!props.canAttack || state.isOtherPlayerTurn}
 				onClick={() => {
-					props.toggleAttackMode(props)
+					props.toggleAttackMode()
 				}}
 			>
 				Attack
@@ -32,7 +32,7 @@ const Card = props => {
 			<button
 				disabled={state.isOtherPlayerTurn}
 				onClick={() => {
-					props.invokeCard(props)
+					props.invokeCard()
 				}}
 			>
 				invoke
@@ -260,10 +260,14 @@ export default () => {
 				<div className='field-item' key={i + Math.random()}>
 					{allySortedField[i] ? (
 						<Card
+							{...allySortedField[i]}
 							dataId={allySortedField[i].id}
 							key={allySortedField[i].id}
-							{...allySortedField[i]}
 							turnEnded={isOtherPlayerTurn}
+                            playerNumberOwner={allySortedField[i].playerNumberOwner}
+							toggleAttackMode={() => {
+							    toggleAttackMode()
+							}}
 						/>
 					) : (
 						''
@@ -280,10 +284,14 @@ export default () => {
 				>
 					{enemySortedField[i] ? (
 						<Card
+							{...enemySortedField[i]}
 							dataId={enemySortedField[i].id}
 							key={enemySortedField[i].id}
-							{...enemySortedField[i]}
 							turnEnded={isOtherPlayerTurn}
+                            playerNumberOwner={enemySortedField[i].playerNumberOwner}
+							toggleAttackMode={() => {
+							    toggleAttackMode()
+							}}
 						/>
 					) : (
 						''
@@ -305,13 +313,22 @@ export default () => {
 							dataId={card.id}
                             invokeCard={() => invokeCard(card)}
                             playerNumberOwner={playerNumberOwner}
-							// toggleAttackMode={propsCard => {
-							//     toggleAttackMode(propsCard)
-							// }}
+							toggleAttackMode={() => {
+							    toggleAttackMode()
+							}}
 						/>
 				  ))
 				: [<div className='card' key={Math.random()}></div>]
 		return cards
+	}
+
+	const toggleAttackMode = () => {
+		dispatch({
+			type: 'SET_ATTACK_MODE',
+			payload: {
+				isAttackMode: true,
+			}
+		})
 	}
 
 	const setListeners = () => {

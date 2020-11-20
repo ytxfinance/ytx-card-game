@@ -63,6 +63,7 @@ const StateProvider = ({ children }) => {
                 newState = {
                     ...state,
                     isAttackMode: action.payload.isAttackMode,
+                    attackingCardId: action.payload.attackingCardId,
                 }
                 return newState
             case 'SET_HAND_CARDS':

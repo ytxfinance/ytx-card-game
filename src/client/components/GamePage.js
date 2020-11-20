@@ -21,7 +21,7 @@ const Card = props => {
 			<button
 				disabled={!props.canAttack || state.isOtherPlayerTurn}
 				onClick={() => {
-					props.toggleAttackMode()
+					props.toggleAttackMode(props.cardId)
 				}}
 			>
 				Attack
@@ -181,6 +181,10 @@ export default () => {
                 visualAllyHand,
             },
         })
+	}, [state.game, state.isAttackMode])
+
+	// When the attack mode is activate, regenerate the field
+	useEffect(() => {
         const { allyFieldHtml, enemyFieldHtml } = generateFieldCards(
             state.playerNumber,
             state.game.player1.field,
@@ -193,8 +197,8 @@ export default () => {
                 allyFieldHtml,
                 enemyFieldHtml,
             },
-        })
-	}, [state.game])
+        })		
+	}, [state.game, state.isAttackMode])
 
 	// Checked
 	const generateFieldCards = (
@@ -266,7 +270,7 @@ export default () => {
 							turnEnded={isOtherPlayerTurn}
                             playerNumberOwner={allySortedField[i].playerNumberOwner}
 							toggleAttackMode={() => {
-							    toggleAttackMode()
+							    toggleAttackMode(allySortedField[i].id)
 							}}
 						/>
 					) : (
@@ -279,7 +283,7 @@ export default () => {
 					className='field-item'
 					key={i + Math.random()}
 					onClick={e => {
-						if (props.isAttackMode) props.attackField(e.currentTarget)
+						if (state.isAttackMode) attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -290,7 +294,7 @@ export default () => {
 							turnEnded={isOtherPlayerTurn}
                             playerNumberOwner={enemySortedField[i].playerNumberOwner}
 							toggleAttackMode={() => {
-							    toggleAttackMode()
+							    toggleAttackMode(enemySortedField[i].id)
 							}}
 						/>
 					) : (
@@ -314,21 +318,12 @@ export default () => {
                             invokeCard={() => invokeCard(card)}
                             playerNumberOwner={playerNumberOwner}
 							toggleAttackMode={() => {
-							    toggleAttackMode()
+							    toggleAttackMode(card.id)
 							}}
 						/>
 				  ))
 				: [<div className='card' key={Math.random()}></div>]
 		return cards
-	}
-
-	const toggleAttackMode = () => {
-		dispatch({
-			type: 'SET_ATTACK_MODE',
-			payload: {
-				isAttackMode: true,
-			}
-		})
 	}
 
 	const setListeners = () => {
@@ -350,6 +345,14 @@ export default () => {
 			})
 		})
 		state.socket.on('card-invoke-received', data => {
+			dispatch({
+				type: 'SET_GAME',
+				payload: {
+					game: data.game,
+				},
+			})
+		})
+		state.socket.on('attack-field-received', data => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
@@ -426,6 +429,120 @@ export default () => {
 		})
 	}
 
+	const toggleAttackMode = cardId => {
+		dispatch({
+			type: 'SET_ATTACK_MODE',
+			payload: {
+				isAttackMode: !state.isAttackMode,
+				attackingCardId: cardId,
+			}
+		})
+	}
+
+	const getDamageMultiplier = (attackerType, victimType) => {
+		// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
+		let damageMultiplier = 1
+		switch(attackerType) {
+			case 'fire':
+				if(victimType == 'wind') damageMultiplier = 2
+				else if(victimType == 'water' || victimType == 'life' || victimType == 'death') damageMultiplier = 0.5
+				break
+			case 'wind':
+				if(victimType == 'water') damageMultiplier = 2
+				else if(victimType == 'fire' || victimType == 'life' || victimType == 'death') damageMultiplier = 0.5
+				break
+			case 'water':
+				if(victimType == 'fire') damageMultiplier = 2
+				else if(victimType == 'wind' || victimType == 'life' || victimType == 'death') damageMultiplier = 0.5
+				break
+			case 'life':
+				if(victimType == 'fire' || victimType == 'wind' || victimType == 'water' || victimType == 'neutral') damageMultiplier = 2
+				break
+			case 'death':
+				if(victimType == 'fire' || victimType == 'wind' || victimType == 'water' || victimType == 'neutral') damageMultiplier = 2
+				break
+			case 'neutral':
+				if(victimType == 'fire' || victimType == 'wind' || victimType == 'water' || victimType == 'life' || victimType == 'death') damageMultiplier = 0.5
+				break
+		}
+		return damageMultiplier
+	}
+
+	const attackField = target => {
+		// Find card stats by searching in the field
+		let victim = null
+		let attacker = null
+		let allyUpdatedField = []
+		let enemyUpdatedField = []
+		let ally = {}
+		let enemy = {}
+
+		if (state.playerNumber === 1) {
+			ally = state.game.player1
+			enemy = state.game.player2
+		} else {
+			ally = state.game.player2
+			enemy = state.game.player1
+		}
+		enemy.field.map(currentCard => {
+			if(target.firstChild && currentCard.id == target.firstChild.dataset.id) {
+				victim = currentCard
+			}
+		})
+ 
+		if(!victim) return toggleAttackMode(0)
+ 
+		ally.field.map(currentCard => {
+			if(currentCard.id == state.attackingCardId) {
+				attacker = currentCard
+			}
+		})
+		let attackingDamageMultiplier = getDamageMultiplier(attacker.type, victim.type)
+		let victimDamageMultiplier = getDamageMultiplier(victim.type, attacker.type)
+ 
+		// Reduce attacker's and receiver's card life
+		victim.life = victim.life - attacker.attack * attackingDamageMultiplier
+		attacker.life = attacker.life - victim.attack * victimDamageMultiplier
+		attacker.canAttack = false
+ 
+		// Update the field by deleting the destroyed cards, we don't care bout those, they are gone forever
+		enemy.field.map(currentCard => {
+			let addCard = true
+			if(currentCard.id == target.firstChild.dataset.id) {
+				if(victim.life <= 0) addCard = false
+			}
+			if(addCard) enemyUpdatedField.push(Object.assign({}, currentCard))
+		})
+		ally.field.map(currentCard => {
+			let addCard = true
+			if(currentCard.id == state.attackingCardId) {
+				if(attacker.life <= 0) addCard = false
+			}
+			if(addCard) allyUpdatedField.push(Object.assign({}, currentCard))
+		})
+
+		let copyGame = {...state.game}
+		if (state.playerNumber === 1) {
+			copyGame.player1.field = allyUpdatedField
+			copyGame.player2.field = enemyUpdatedField
+		} else {
+			copyGame.player2.field = allyUpdatedField
+			copyGame.player1.field = enemyUpdatedField
+		}
+ 
+		dispatch({
+			type: 'SET_GAME',
+			payload: {
+				game: copyGame,
+			}
+		})
+		toggleAttackMode(0)
+		
+		state.socket.emit('attacked-field', {
+			game: copyGame,
+		})
+	}
+	
 	return (
 		<GameView
 			// {...this.state}

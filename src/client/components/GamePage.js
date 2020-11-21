@@ -51,7 +51,7 @@ const Card = props => {
 	)
 }
 
-const GameView = props => {
+const Board = props => {
 	const { state } = useContext(store)
 
 	return (
@@ -147,6 +147,7 @@ const GameView = props => {
 
 export default () => {
 	const { state, dispatch } = useContext(store)
+	const [gameOver, setGameOver] = useState(null)
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -360,6 +361,23 @@ export default () => {
 				},
 			})
 		})
+		state.socket.on('attack-direct-received', data => {
+			dispatch({
+				type: 'SET_GAME',
+				payload: {
+					game: data.game,
+				},
+			})
+		})
+		state.socket.on('game-over', data => {
+			// If the winner is this player, emit 'you win' message
+			if (state.playerNumber === data.winner) {
+
+			} else {
+				// Emit 'you lose' message
+			}
+			data.game
+		})
 	}
 
 	const endTurn = () => {
@@ -544,7 +562,6 @@ export default () => {
 	}
 	
 	const attackDirectly = () => {
-		// TODO
 		console.log('Attack directly executed')
 		let ally = null
 		let enemy = null
@@ -595,69 +612,37 @@ export default () => {
 		state.socket.emit('attack-direct', {
 			game,
 		})
+	}
 
-		// this.setState({
-		// 	me: {
-		// 		hand: this.state.me.hand,
-		// 		life: this.state.me.life,
-		// 		field: allyUpdatedField,
-		// 		energy: this.state.me.energy,
-		// 	},
-		// 	enemy: {
-		// 		hand: this.state.enemy.hand,
-		// 		life: updatedLife <= 0 ? 0 : updatedLife,
-		// 		field: this.state.enemy.field,
-		// 		energy: this.state.enemy.energy,
-		// 	},
-		// 	isAttackMode: false,
-		// 	attackingCardId: 0,
-		// })
-	
-		// if(updatedLife <= 0) {
-		// 	// 2. Turn each card into bytes32 with the desired signature
-		// 	let allyBytes32FieldCards = await this.getEncryptedFields()
-	
-		// 	// 3. Finish the game by sending the final contract call to close the state channel
-		// 	const signedMessage = await this.signMessage(await this.generateHash())
-		// 	await this.props.contract.methods.verifyPlayerBalance(
-		// 		signedMessage,
-		// 		allyBytes32FieldCards,
-		// 		this.state.me.life,
-		// 		String(this.state.nonce),
-		// 		this.state.sequence,
-		// 		this.props.account,
-		// 	).send({
-		// 		from: this.props.account
-		// 	})
-	
-		// 	// 4. Show your winning message
-		// 	this.setState({
-		// 		winner: this.props.isThisPlayerOne ? 1 : 2,
-		// 		gameOver: true,
-		// 	})
-	
-		// 	// 5. Emmit the loss to the other player
-		// 	this.emitFinish({
-		// 		isThisPlayerOne: this.props.isThisPlayerOne,
-		// 	})
-		// } else {
-		// 	// Send a game over event if the ended life is zero after the attack
-		// 	this.emitDirectAttack({
-		// 		remainingLife: updatedLife,
-		// 		isThisPlayerOne: this.props.isThisPlayerOne,
-		// 	})
-		// }
+	const gameOver = amITheWinner => {
+		if (amITheWinner) {
+			// Display the you win container
+			setGameOver(
+				<div className="game-over-container">
+					<h1>You Win!</h1>
+					<p>Congratulations you've earned 180 YTX tokens while 20 YTX have been moved to the treasury!</p>
+					<button>Redeem Earnings & Exit</button>
+				</div>
+			)
+		} else {
+			// Display the you lost container
+			setGameOver(
+				<div className="game-over-container">
+					<h1>You Lose!</h1>
+					<p>Too bad, you lost the game. Good luck next time!</p>
+					<button>Exit</button>	
+				</div>
+			)
+		}
 	}
 
 	return (
-		<GameView
-			// {...this.state}
-			// invokeCard={card => invokeCard(card, state.playerNumber === 1 ? state.game.player1 : state.game.player2)}
-			// toggleAttackMode={card => toggleAttackMode(card)}
-			// attackDirectly={() => this.attackDirectly()}
-			// attackField={target => this.attackField(target)}
-			attackDirectly={() => attackDirectly()}
-			endTurn={() => endTurn()}
-		/>
+		<>
+			{ gameOver }
+			<Board
+				attackDirectly={() => attackDirectly()}
+				endTurn={() => endTurn()}
+			/>
+		</>
 	)
 }

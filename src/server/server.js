@@ -518,11 +518,12 @@ io.on('connection', async socket => {
 		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
 		if (!stillActive) return
 		const playerNumber = getPlayerNumber(socket.id, data.game)
-		let updatedGame
 		let final
+		let isGameOver
+		let set
 		// Check if the game exists
 		try {
-			updatedGame = await db.collection('games').findOne({
+			await db.collection('games').findOne({
 				gameId: data.game.gameId,
 			})
 		} catch (e) {
@@ -531,16 +532,30 @@ io.on('connection', async socket => {
 		if (playerNumber === 0) {
 			return socket.emit('user-error', '#21 You are not a player of this particular game')
 		}
+
+		// Check if the life is gone and if so end the game
+		if (data.game.player1.life <= 0 || data.game.player2.life <= 0) {
+			isGameOver = true
+			set = {
+				status: GAME_STATUS.ENDED,
+				'player1.field': data.game.player1.field,
+				'player1.life': data.game.player1.life,
+				'player2.field': data.game.player2.field,
+				'player2.life': data.game.player2.life,
+			}
+		} else {
+			set = {
+				'player1.field': data.game.player1.field,
+				'player1.life': data.game.player1.life,
+				'player2.field': data.game.player2.field,
+				'player2.life': data.game.player2.life,
+			}
+		}
 		try {
 			final = await db.collection('games').findOneAndUpdate({
 				gameId: data.game.gameId,
 			}, {
-				$set: {
-					'player1.field': data.game.player1.field,
-					'player1.life': data.game.player1.life,
-					'player2.field': data.game.player2.field,
-					'player2.life': data.game.player2.life,
-				}
+				$set: set,
 			}, {
 				returnOriginal: false,
 			})
@@ -548,12 +563,15 @@ io.on('connection', async socket => {
 			return socket.emit('user-error', '#31 Error updating the game data')
 		}
 
+		// End the game
+		if (isGameOver) return endGame(io, final.value)
+
 		if (playerNumber === 1) {
-			io.to(data.game.player2.socketId).emit('attack-field-received', {
+			io.to(data.game.player2.socketId).emit('attack-direct-received', {
 				game: final.value,
 			})
 		} else {
-			io.to(data.game.player1.socketId).emit('attack-field-received', {
+			io.to(data.game.player1.socketId).emit('attack-direct-received', {
 				game: final.value,
 			})
 		}
@@ -680,9 +698,17 @@ const generateInitialCards = () => {
 	return { cardsPlayer1, cardsPlayer2 }
 }
 
-const endGame = () => {
+const endGame = (io, final) => {
 	// Send the winner emit event
-	// Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees
+	io.to(game.player1.socketId).emit('game-over', {
+		winner: 1,
+		game: final,
+	})
+	io.to(game.player2.socketId).emit('game-over', {
+		winner: 2,
+		game: final,
+	})
+	// TODO Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees
 }
 
 const start = async () => {

@@ -520,6 +520,7 @@ io.on('connection', async socket => {
 		const playerNumber = getPlayerNumber(socket.id, data.game)
 		let final
 		let isGameOver
+		let winner
 		let set
 		// Check if the game exists
 		try {
@@ -536,6 +537,7 @@ io.on('connection', async socket => {
 		// Check if the life is gone and if so end the game
 		if (data.game.player1.life <= 0 || data.game.player2.life <= 0) {
 			isGameOver = true
+			data.game.player1.life <= 0 ? winner = 2 : winner = 1
 			set = {
 				status: GAME_STATUS.ENDED,
 				'player1.field': data.game.player1.field,
@@ -564,7 +566,7 @@ io.on('connection', async socket => {
 		}
 
 		// End the game
-		if (isGameOver) return endGame(io, final.value)
+		if (isGameOver) return endGame(io, final.value, winner)
 
 		if (playerNumber === 1) {
 			io.to(data.game.player2.socketId).emit('attack-direct-received', {
@@ -698,14 +700,14 @@ const generateInitialCards = () => {
 	return { cardsPlayer1, cardsPlayer2 }
 }
 
-const endGame = (io, final) => {
+const endGame = (io, final, winner) => {
 	// Send the winner emit event
-	io.to(game.player1.socketId).emit('game-over', {
-		winner: 1,
+	io.to(final.player1.socketId).emit('game-over', {
+		winner,
 		game: final,
 	})
-	io.to(game.player2.socketId).emit('game-over', {
-		winner: 2,
+	io.to(final.player2.socketId).emit('game-over', {
+		winner,
 		game: final,
 	})
 	// TODO Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees

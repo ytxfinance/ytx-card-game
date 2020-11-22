@@ -372,11 +372,12 @@ export default () => {
 		state.socket.on('game-over', data => {
 			// If the winner is this player, emit 'you win' message
 			if (state.playerNumber === data.winner) {
-
+				endGame(true)
 			} else {
 				// Emit 'you lose' message
+				endGame(false)
 			}
-			data.game
+			// data.game
 		})
 	}
 
@@ -614,7 +615,7 @@ export default () => {
 		})
 	}
 
-	const gameOver = amITheWinner => {
+	const endGame = amITheWinner => {
 		if (amITheWinner) {
 			// Display the you win container
 			setGameOver(
@@ -630,7 +631,7 @@ export default () => {
 				<div className="game-over-container">
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
-					<button>Exit</button>	
+					<Link to="/">Exit</Link>
 				</div>
 			)
 		}

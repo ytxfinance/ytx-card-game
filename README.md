@@ -1,3 +1,9 @@
+## How to run
+- `yarn` installs dependencies
+- `yarn fe:watch` will compile jsx
+- `yarn be:dev` starts localhost:8000 and will serve the client
+- optional replacement: `yarn fe:dev` will run the client without being served from the server
+
 ## General Specification
 - Each user has 100 life points and an initial 10 energy points.
 - Energy points are used to deploy new cards.

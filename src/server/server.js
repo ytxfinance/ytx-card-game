@@ -427,7 +427,7 @@ io.on('connection', async socket => {
 			return socket.emit('user-error', '#21 You are not a player of this particular game')
 		} else if (playerNumber === 1) {
 			// Remove card from hand
-			const cardHandIndex = updatedGame.player1.hand.findIndex(element => deepEqual(element, data.card))
+			const cardHandIndex = updatedGame.player1.hand.findIndex(element => element.id === data.card.id)
 			updatedGame.player1.hand.splice(cardHandIndex, 1)
 			// Add card to field
 			updatedGame.player1.field.push(data.card)
@@ -437,7 +437,7 @@ io.on('connection', async socket => {
 				return socket.emit('user-error', "#30 You don't have enough energy to invoke this card")
 			}
 		} else {
-			const cardHandIndex = updatedGame.player2.hand.findIndex(element => deepEqual(element, data.card))
+			const cardHandIndex = updatedGame.player2.hand.findIndex(element => element.id === data.card.id)
 			updatedGame.player2.hand.splice(cardHandIndex, 1)
 			// Add card to field
 			updatedGame.player2.field.push(data.card)

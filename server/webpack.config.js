@@ -20,9 +20,7 @@ module.exports = {
         filename: 'build.js'
     },
     resolve: {
-        extensions: [
-            // '.ts', 
-            '.js'] // not sure why this requires .js to load node_modules
+        extensions: [ '.wasm', '.mjs', '.js', '.json'],
     },
     module: {
         rules: [ 

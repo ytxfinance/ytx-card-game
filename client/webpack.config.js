@@ -1,7 +1,6 @@
 const path = require('path')
 const htmlPlugin = require('html-webpack-plugin')
 
-console.log(path.resolve(__dirname, '../dist'))
 module.exports = {
     mode: process.env.NODE_ENV,
     target: "web",
@@ -15,7 +14,7 @@ module.exports = {
         filename: 'build.js'
     },
     resolve: {
-        extensions: ['.jsx', 'js', '.wasm', '.mjs', '.js', '.json'],
+        extensions: ['.jsx', '.wasm', '.mjs', '.js', '.json'],
     },
     module: {
         rules: [ 

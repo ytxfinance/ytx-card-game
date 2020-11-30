@@ -21,7 +21,11 @@
 body
     font-family: sans-serif
     margin: 0
-
+#root
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 button
 .button-like
     background-color: rgb(42, 90, 162)
@@ -77,14 +81,11 @@ input[type='submit']
         background-color: #000000
 
 .page
-    position: fixed
     box-shadow: 0 0 30px 0 lightgrey
     padding: 50px
     border-radius: 10px
-    top: 50%
-    left: 50%
-    transform: translate(-50%, -50%)
     text-align: center
+    margin: 0 auto;
 
     h1
         margin-top: 0
@@ -164,11 +165,12 @@ input[type='submit']
 
 .game
     width: 900px
-    height: 600px
+    min-height: 600px
     background-color: whitesmoke
     position: relative
     display: grid
     align-items: center
+    margin: 0 auto;
 
     .my-stats
     .enemy-stats
@@ -205,6 +207,9 @@ input[type='submit']
         display: flex
         justify-content: center
         align-items: center
+        margin: 0 auto;
+        flex-wrap: wrap;
+        max-width: 70%;
 
     .field
 

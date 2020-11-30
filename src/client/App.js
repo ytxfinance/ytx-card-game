@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch, useHistory } from 'react-router-dom'
 import WelcomePage from './components/WelcomePage'
 import CreatePage from './components/CreatePage'
-import JoinPage from './components/JoinPage'
 import GamePage from './components/GamePage'
 import Web3 from 'web3'
 import io from 'socket.io-client'
@@ -187,12 +186,6 @@ const App = () => {
 					path='/create'
 					render={() => (
 						<CreatePage />
-					)}
-				/>
-				<Route
-					path='/join'
-					render={() => (
-						<JoinPage />
 					)}
 				/>
 				<Route

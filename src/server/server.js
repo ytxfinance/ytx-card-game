@@ -177,38 +177,6 @@ io.on('connection', async socket => {
 		io.to(game.value.player1.socketId).emit('player-joined', game.value)
 		io.to(game.value.player2.socketId).emit('player-joined', game.value)
 	})
-	socket.on('invoke-card', async data => {
-		// Check if users are still active
-		const stillActive = checkActiveSockets(data.game.player1.socketId, data.game.player2.socketId)
-		const playerNumber = getPlayerNumber(socket.id, data.game)
-		let updateData
-		if (!stillActive) return
-		if (playerNumber === 1) {
-			updateData = {
-				'player1.field': data.game.player1.field,
-				'player1.hand': data.game.player1.hand,
-			}
-		} else if (playerNumber === 2) {
-			updateData = {
-				'player2.field': data.game.player2.field,
-				'player2.hand': data.game.player2.hand,
-			}
-		} else {
-			return socket.emit('user-error', "#21 You aren't a player of this particular game")
-		}
-		try {
-			await db.collection('games').updateOne({
-				gameId: data.game.gameId,
-			}, { $set: updateData })
-		} catch (e) {
-			return socket.emit('user-error', '#22 Error updating the game data with the card invoke')
-		}
-		if (playerNumber === 1) {
-			io.to(data.game.player1.socketId).emit('invoke-player1', data.game)
-		} else {
-			io.to(data.game.player2.socketId).emit('invoke-player2', data.game)
-		}
-	})
 	socket.on('update-game', async data => {
 		// Update-game is an event that indicates a single change such as ending a turn,
 		// invoking a card, attacking directly or to the field or drawing a card

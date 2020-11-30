@@ -170,14 +170,14 @@ export default () => {
 						<div className='card' key={Math.random()}></div>
 					))
 				: [<div className='empty-hand' key={Math.random()}>Empty hand</div>]
-            visualAllyHand = generateHandCards(state.game.player2.hand, 2)
+			visualAllyHand = generateHandCards(state.game.player2.hand, 2)
         } else {
 			visualEnemyHand =  state.game.player2.hand.length > 0
 				? state.game.player2.hand.map(() => (
 						<div className='card' key={Math.random()}></div>
 					))
 				: [<div className='empty-hand' key={Math.random()}>Empty hand</div>]
-            visualAllyHand = generateHandCards(state.game.player1.hand, 1)
+			visualAllyHand = generateHandCards(state.game.player1.hand, 1)
         }
         dispatch({
             type: 'SET_HAND_CARDS',

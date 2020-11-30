@@ -12,6 +12,8 @@ const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
 // The individual Card component
 const Card = props => {
     const { state } = useContext(store)
+
+    const isGamePaused = () => (state.game && state.game.gamePaused)
     
     let isAllyCard = state.playerNumber === props.playerNumberOwner
 	// If the card is ally, display the attack button or invoke, else don't display actions
@@ -19,7 +21,7 @@ const Card = props => {
 	if (props.isInvoked && isAllyCard) {
 		buttonToDisplay = (
 			<button
-				disabled={!props.canAttack || state.isOtherPlayerTurn}
+				disabled={!props.canAttack || state.isOtherPlayerTurn || isGamePaused()}
 				onClick={() => {
 					props.toggleAttackMode(props.cardId)
 				}}
@@ -30,7 +32,7 @@ const Card = props => {
 	} else if (isAllyCard) {
 		buttonToDisplay = (
 			<button
-				disabled={state.isOtherPlayerTurn}
+				disabled={state.isOtherPlayerTurn || isGamePaused()}
 				onClick={() => {
 					props.invokeCard()
 				}}
@@ -53,6 +55,7 @@ const Card = props => {
 
 const Board = props => {
 	const { state } = useContext(store)
+  const isGamePaused = () => (state.game && state.game.gamePaused)
 
 	return (
 		<div className='page game-page'>
@@ -133,7 +136,7 @@ const Board = props => {
 				</div>
 				<button
 					className='end-turn'
-					disabled={state.isOtherPlayerTurn}
+					disabled={state.isOtherPlayerTurn || isGamePaused()}
 					onClick={() => {
 						props.endTurn()
 					}}
@@ -563,18 +566,38 @@ export default () => {
 	}
 	
 	const attackDirectly = () => {
-		console.log('Attack directly executed')
+    console.log('Attack directly executed')
+    const currentGame = state.game
+
 		let ally = null
 		let enemy = null
 		let allyUpdatedField = []
 		let card
-		let updatedLife
+    let updatedLife
+    if(!currentGame) {
+     return dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: 'Current game not found',
+				},
+			})
+    }
+
+    if(currentGame.status === 'ENDED') {
+      return dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: 'Game is already over.',
+				},
+			})
+    }
+
 		if (state.playerNumber === 1) {
-			ally = state.game.player1
-			enemy = state.game.player2
+			ally = currentGame.player1
+			enemy = currentGame.player2
 		} else {
-			ally = state.game.player2
-			enemy = state.game.player1
+			ally = currentGame.player2
+			enemy = currentGame.player1
 		}
 
 		// Find card stats by searching in the field
@@ -592,26 +615,30 @@ export default () => {
 			allyUpdatedField.push(currentCard)
 		})
 
-		let game = { ...state.game }
 		if (state.playerNumber === 1) {
-			game.player1.field = allyUpdatedField
-			game.player2.life = updatedLife
+			currentGame.player1.field = allyUpdatedField
+			currentGame.player2.life = updatedLife
 		} else {
-			game.player2.field = allyUpdatedField
-			game.player1.life = updatedLife
-		}
+			currentGame.player2.field = allyUpdatedField
+			currentGame.player1.life = updatedLife
+    }
+    
+    // Check if the life is gone and if so end the game
+    if(updatedLife <= 0) {
+      currentGame.gamePaused = true
+    }
 
 		dispatch({
 			type: 'SET_GAME',
 			payload: {
-				game,
+				game: currentGame,
 			}
 		})
 		toggleAttackMode(0)
 
 		// Check if a winner is elected
 		state.socket.emit('attack-direct', {
-			game,
+			game: currentGame,
 		})
 	}
 

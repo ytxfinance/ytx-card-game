@@ -543,7 +543,8 @@ io.on('connection', async socket => {
 				'player1.field': data.game.player1.field,
 				'player1.life': data.game.player1.life,
 				'player2.field': data.game.player2.field,
-				'player2.life': data.game.player2.life,
+        'player2.life': data.game.player2.life,
+        gamePaused: true
 			}
 		} else {
 			set = {
@@ -555,7 +556,7 @@ io.on('connection', async socket => {
 		}
 		try {
 			final = await db.collection('games').findOneAndUpdate({
-				gameId: data.game.gameId,
+        gameId: data.game.gameId,
 			}, {
 				$set: set,
 			}, {
@@ -563,7 +564,7 @@ io.on('connection', async socket => {
 			})
 		} catch (e) {
 			return socket.emit('user-error', '#31 Error updating the game data')
-		}
+    }
 
 		// End the game
 		if (isGameOver) return endGame(io, final.value, winner)

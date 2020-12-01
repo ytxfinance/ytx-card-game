@@ -574,13 +574,14 @@ io.on("connection", async (socket) => {
 	});
 	socket.on("attacked-field", async (data) => {
 		console.log("attack field BY", socket.id);
-		const { currentGame, attackingCardID, enemyCardID } = data;
-		let updatedGame;
+
+		const { currentGameID, attackingCardID, enemyCardID } = data;
+		let currentGame;
 
 		// Check if the game exists
 		try {
-			updatedGame = await db.collection("games").findOne({
-				gameId: currentGame.gameId,
+			currentGame = await db.collection("games").findOne({
+				gameId: currentGameID,
 			});
 		} catch (e) {
 			return socket.emit(
@@ -688,19 +689,14 @@ io.on("connection", async (socket) => {
 	});
 	socket.on("attack-direct", async (data) => {
 		console.log("attack direct BY", socket.id);
-		const { currentGame, attackingCardID } = data;
 
-		// Check if users are still active
-		const stillActive = checkActiveSockets(
-			currentGame.player1.socketId,
-			currentGame.player2.socketId
-		);
-		if (!stillActive) return;
+		const { currentGameID, attackingCardID } = data;
+		let currentGame;
 
 		// Check if the game exists
 		try {
-			await db.collection("games").findOne({
-				gameId: currentGame.gameId,
+			currentGame = await db.collection("games").findOne({
+				gameId: currentGameID,
 			});
 		} catch (e) {
 			return socket.emit(
@@ -708,6 +704,13 @@ io.on("connection", async (socket) => {
 				"#28 Game not found from the given game ID"
 			);
 		}
+
+		// Check if users are still active
+		const stillActive = checkActiveSockets(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId
+		);
+		if (!stillActive) return;
 
 		const playerNumber = getPlayerNumber(socket.id, currentGame);
 

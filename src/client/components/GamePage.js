@@ -545,11 +545,30 @@ export default () => {
 	 * @dev Handles the logic for attacking the enemy field card
 	 */
 	const attackField = (target) => {
+		console.log("Attack Field executed");
+		const currentGame = state.game;
+
+		if (!currentGame) {
+			return dispatch({
+				type: "SET_ERROR",
+				payload: {
+					error: "Current game not found",
+				},
+			});
+		}
+
+		if (currentGame.status === "ENDED") {
+			return dispatch({
+				type: "SET_ERROR",
+				payload: {
+					error: "Game is already over.",
+				},
+			});
+		}
 		// Disables the selected card from attacking again
 		toggleAttackMode(0);
-
 		state.socket.emit("attacked-field", {
-			currentGame: state.game,
+			currentGameID: currentGame.gameId,
 			attackingCardID: state.attackingCardId,
 			enemyCardID: target.firstChild.dataset.id,
 		});
@@ -585,7 +604,7 @@ export default () => {
 
 		// Notify server of attack direct action by player
 		state.socket.emit("attack-direct", {
-			currentGame,
+			currentGameID: currentGame.gameId,
 			attackingCardID: state.attackingCardId,
 		});
 	};

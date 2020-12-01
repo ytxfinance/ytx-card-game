@@ -385,6 +385,12 @@ export default () => {
 			});
 		});
 		state.socket.on("game-over", (data) => {
+			dispatch({
+				type: "SET_GAME",
+				payload: {
+					game: data.game,
+				},
+			});
 			// If the winner is this player, emit 'you win' message
 			if (state.playerNumber === data.winner) {
 				endGame(true);
@@ -392,7 +398,6 @@ export default () => {
 				// Emit 'you lose' message
 				endGame(false);
 			}
-			// data.game
 		});
 	};
 

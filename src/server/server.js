@@ -53,6 +53,7 @@ app.use('*', (req, res, next) => {
 
 app.post('/github-push', (req, res) => {
 	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {})
+	res.status(200).send("Ok")
 })
 
 app.get('/build.js', (req, res) => {

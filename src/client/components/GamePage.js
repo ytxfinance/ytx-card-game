@@ -176,14 +176,28 @@ export default () => {
 		let visualEnemyHand;
 		let visualAllyHand;
 		if (state.playerNumber === 2) {
-			visualEnemyHand = state.game.player1.hand.map(() => (
-				<div className="card" key={Math.random()}></div>
-			));
+			visualEnemyHand =
+				state.game.player1.hand.length > 0
+					? state.game.player1.hand.map(() => (
+							<div className="card" key={Math.random()}></div>
+					  ))
+					: [
+							<div className="empty-hand" key={Math.random()}>
+								Empty hand
+							</div>,
+					  ];
 			visualAllyHand = generateHandCards(state.game.player2.hand, 2);
 		} else {
-			visualEnemyHand = state.game.player2.hand.map(() => (
-				<div className="card" key={Math.random()}></div>
-			));
+			visualEnemyHand =
+				state.game.player2.hand.length > 0
+					? state.game.player2.hand.map(() => (
+							<div className="card" key={Math.random()}></div>
+					  ))
+					: [
+							<div className="empty-hand" key={Math.random()}>
+								Empty hand
+							</div>,
+					  ];
 			visualAllyHand = generateHandCards(state.game.player1.hand, 1);
 		}
 		dispatch({
@@ -338,7 +352,11 @@ export default () => {
 							}}
 						/>
 				  ))
-				: [<div className="card" key={Math.random()}></div>];
+				: [
+						<div className="empty-hand" key={Math.random()}>
+							Empty hand
+						</div>,
+				  ];
 		return cards;
 	};
 

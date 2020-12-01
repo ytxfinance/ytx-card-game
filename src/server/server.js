@@ -51,6 +51,10 @@ app.use('*', (req, res, next) => {
 	next();
 });
 
+app.post('/github-push', (req, res) => {
+	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {})
+})
+
 app.get('/build.js', (req, res) => {
 	return res.sendFile(path.join(__dirname, '../../dist/build.js'));
 });

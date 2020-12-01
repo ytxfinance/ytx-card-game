@@ -574,19 +574,13 @@ io.on("connection", async (socket) => {
 	});
 	socket.on("attacked-field", async (data) => {
 		console.log("attack field BY", socket.id);
-		// Check if users are still active
-		const stillActive = checkActiveSockets(
-			data.game.player1.socketId,
-			data.game.player2.socketId
-		);
-		if (!stillActive) return;
-		const playerNumber = getPlayerNumber(socket.id, data.game);
+		const { currentGame, attackingCardID, enemyCardID } = data;
 		let updatedGame;
-		let final;
+
 		// Check if the game exists
 		try {
 			updatedGame = await db.collection("games").findOne({
-				gameId: data.game.gameId,
+				gameId: currentGame.gameId,
 			});
 		} catch (e) {
 			return socket.emit(
@@ -594,21 +588,84 @@ io.on("connection", async (socket) => {
 				"#28 Game not found from the given game ID"
 			);
 		}
+
+		// Check if users are still active
+		const stillActive = checkActiveSockets(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId
+		);
+		if (!stillActive) return;
+
+		const playerNumber = getPlayerNumber(socket.id, currentGame);
+
 		if (playerNumber === 0) {
 			return socket.emit(
 				"user-error",
 				"#21 You are not a player of this particular game"
 			);
 		}
+
+		const { ally, enemy } = getAllyAndEnemy(playerNumber, currentGame);
+		const attackingCard = ally.field.find(
+			(currentCard) => currentCard.id === attackingCardID
+		);
+		const enemyCard = enemy.field.find(
+			(currentCard) => currentCard.id === enemyCardID
+		);
+
+		const attackingCardIndex = ally.field.indexOf(attackingCard);
+		const enemyCardIndex = enemy.field.indexOf(enemyCard);
+
+		if (!attackingCard) {
+			return socket.emit(
+				"user-error",
+				"#50 Attacking card could not be found"
+			);
+		}
+
+		if (!enemyCard) {
+			return socket.emit(
+				"user-error",
+				"#50 Enemy card could not be found"
+			);
+		}
+
+		const attackingDamageMultiplier = getCardDamageMultiplier(
+			attackingCard.type,
+			enemyCard.type
+		);
+		const ememyDamageMultiplier = getCardDamageMultiplier(
+			enemyCard.type,
+			attackingCard.type
+		);
+
+		// Reduce attacker's and receiver's card life
+		enemyCard.life =
+			enemyCard.life - attackingCard.attack * attackingDamageMultiplier;
+		attackingCard.life =
+			attackingCard.life - enemyCard.attack * ememyDamageMultiplier;
+		attackingCard.canAttack = false;
+
+		// Removes dead cards from the field
+		if (attackingCard.life <= 0) {
+			ally.field.splice(attackingCardIndex, 1);
+		}
+
+		if (enemyCard.life <= 0) {
+			enemy.field.splice(enemyCardIndex, 1);
+		}
+
+		let final;
+
 		try {
 			final = await db.collection("games").findOneAndUpdate(
 				{
-					gameId: data.game.gameId,
+					gameId: currentGame.gameId,
 				},
 				{
 					$set: {
-						"player1.field": data.game.player1.field,
-						"player2.field": data.game.player2.field,
+						"player1.field": currentGame.player1.field,
+						"player2.field": currentGame.player2.field,
 					},
 				},
 				{
@@ -621,15 +678,13 @@ io.on("connection", async (socket) => {
 				"#31 Error updating the game data"
 			);
 		}
-		if (playerNumber === 1) {
-			io.to(data.game.player2.socketId).emit("attack-field-received", {
-				game: final.value,
-			});
-		} else {
-			io.to(data.game.player1.socketId).emit("attack-field-received", {
-				game: final.value,
-			});
-		}
+
+		io.to(currentGame.player2.socketId).emit("attack-field-received", {
+			game: final.value,
+		});
+		io.to(currentGame.player1.socketId).emit("attack-field-received", {
+			game: final.value,
+		});
 	});
 	socket.on("attack-direct", async (data) => {
 		console.log("attack direct BY", socket.id);
@@ -748,8 +803,8 @@ const getPlayerNumber = (socketId, game) => {
 /**
  * @dev Gets the ally and enemy player object based on the player number
  *
- * @param playerNumber The player number, valid values are 1 or 2
- * @param game The current game object
+ * @param {Number} playerNumber The player number, valid values are 1 or 2
+ * @param {Object} game The current game object
  */
 const getAllyAndEnemy = (playerNumber, game) => {
 	let ally,
@@ -764,6 +819,74 @@ const getAllyAndEnemy = (playerNumber, game) => {
 	}
 
 	return { ally, enemy };
+};
+
+/**
+ * @dev Calculates the damage multiplier based on Card Type
+ * @param { String } attackerType
+ * @param { String } victimType
+ */
+const getCardDamageMultiplier = (attackerType, victimType) => {
+	// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
+	let damageMultiplier = 1;
+	switch (attackerType) {
+		case "fire":
+			if (victimType == "wind") damageMultiplier = 2;
+			else if (
+				victimType == "water" ||
+				victimType == "life" ||
+				victimType == "death"
+			)
+				damageMultiplier = 0.5;
+			break;
+		case "wind":
+			if (victimType == "water") damageMultiplier = 2;
+			else if (
+				victimType == "fire" ||
+				victimType == "life" ||
+				victimType == "death"
+			)
+				damageMultiplier = 0.5;
+			break;
+		case "water":
+			if (victimType == "fire") damageMultiplier = 2;
+			else if (
+				victimType == "wind" ||
+				victimType == "life" ||
+				victimType == "death"
+			)
+				damageMultiplier = 0.5;
+			break;
+		case "life":
+			if (
+				victimType == "fire" ||
+				victimType == "wind" ||
+				victimType == "water" ||
+				victimType == "neutral"
+			)
+				damageMultiplier = 2;
+			break;
+		case "death":
+			if (
+				victimType == "fire" ||
+				victimType == "wind" ||
+				victimType == "water" ||
+				victimType == "neutral"
+			)
+				damageMultiplier = 2;
+			break;
+		case "neutral":
+			if (
+				victimType == "fire" ||
+				victimType == "wind" ||
+				victimType == "water" ||
+				victimType == "life" ||
+				victimType == "death"
+			)
+				damageMultiplier = 0.5;
+			break;
+	}
+	return damageMultiplier;
 };
 
 // Returns false if one or more are innactive
@@ -904,7 +1027,7 @@ const endGame = (io, game, winner) => {
 	io.to(game.player2.socketId).emit("game-over", {
 		winner,
 		game,
-  });
+	});
 	// TODO Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees
 };
 

@@ -541,87 +541,17 @@ export default () => {
 		return damageMultiplier;
 	};
 
+	/**
+	 * @dev Handles the logic for attacking the enemy field card
+	 */
 	const attackField = (target) => {
-		// Find card stats by searching in the field
-		let victim = null;
-		let attacker = null;
-		let allyUpdatedField = [];
-		let enemyUpdatedField = [];
-		let ally = {};
-		let enemy = {};
-
-		if (state.playerNumber === 1) {
-			ally = state.game.player1;
-			enemy = state.game.player2;
-		} else {
-			ally = state.game.player2;
-			enemy = state.game.player1;
-		}
-		enemy.field.map((currentCard) => {
-			if (
-				target.firstChild &&
-				currentCard.id == target.firstChild.dataset.id
-			) {
-				victim = currentCard;
-			}
-		});
-
-		if (!victim) return toggleAttackMode(0);
-
-		ally.field.map((currentCard) => {
-			if (currentCard.id == state.attackingCardId) {
-				attacker = currentCard;
-			}
-		});
-		let attackingDamageMultiplier = getDamageMultiplier(
-			attacker.type,
-			victim.type
-		);
-		let victimDamageMultiplier = getDamageMultiplier(
-			victim.type,
-			attacker.type
-		);
-
-		// Reduce attacker's and receiver's card life
-		victim.life = victim.life - attacker.attack * attackingDamageMultiplier;
-		attacker.life = attacker.life - victim.attack * victimDamageMultiplier;
-		attacker.canAttack = false;
-
-		// Update the field by deleting the destroyed cards, we don't care bout those, they are gone forever
-		enemy.field.map((currentCard) => {
-			let addCard = true;
-			if (currentCard.id == target.firstChild.dataset.id) {
-				if (victim.life <= 0) addCard = false;
-			}
-			if (addCard) enemyUpdatedField.push(Object.assign({}, currentCard));
-		});
-		ally.field.map((currentCard) => {
-			let addCard = true;
-			if (currentCard.id == state.attackingCardId) {
-				if (attacker.life <= 0) addCard = false;
-			}
-			if (addCard) allyUpdatedField.push(Object.assign({}, currentCard));
-		});
-
-		let copyGame = { ...state.game };
-		if (state.playerNumber === 1) {
-			copyGame.player1.field = allyUpdatedField;
-			copyGame.player2.field = enemyUpdatedField;
-		} else {
-			copyGame.player2.field = allyUpdatedField;
-			copyGame.player1.field = enemyUpdatedField;
-		}
-
-		dispatch({
-			type: "SET_GAME",
-			payload: {
-				game: copyGame,
-			},
-		});
+		// Disables the selected card from attacking again
 		toggleAttackMode(0);
 
 		state.socket.emit("attacked-field", {
-			game: copyGame,
+			currentGame: state.game,
+			attackingCardID: state.attackingCardId,
+			enemyCardID: target.firstChild.dataset.id,
 		});
 	};
 
@@ -650,7 +580,7 @@ export default () => {
 			});
 		}
 
-    // Disables the selected card from attacking again
+		// Disables the selected card from attacking again
 		toggleAttackMode(0);
 
 		// Notify server of attack direct action by player

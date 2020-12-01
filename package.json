@@ -11,11 +11,7 @@
     },
     "keywords": [],
     "author": "",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/merlox/decentralized-card/issues"
-    },
-    "homepage": "https://github.com/merlox/decentralized-card#readme",
+    "license": "MIT",
     "dependencies": {
         "@babel/cli": "^7.12.1",
         "body-parser": "^1.19.0",

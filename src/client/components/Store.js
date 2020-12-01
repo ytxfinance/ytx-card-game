@@ -46,10 +46,14 @@ const StateProvider = ({ children }) => {
 				return newState;
 			case 'SET_IS_OTHER_PLAYER_TURN':
 				console.log('set is other player turn');
+
 				newState = {
 					...state,
 					isOtherPlayerTurn: action.payload.isOtherPlayerTurn,
 				};
+				if (action.payload.game) {
+					newState.game = action.payload.game;
+				}
 				return newState;
 			case 'SET_GAME_OVER':
 				console.log('set game over');
@@ -83,10 +87,15 @@ const StateProvider = ({ children }) => {
 				return newState;
 			case 'SET_GAME':
 				console.log('set game', action.payload.game);
+
 				newState = {
 					...state,
 					game: action.payload.game,
 				};
+				if (action.payload.isOtherPlayerTurn) {
+					newState.isOtherPlayerTurn =
+						action.payload.isOtherPlayerTurn;
+				}
 				return newState;
 			case 'SET_GAME_LIST':
 				console.log('set game list');

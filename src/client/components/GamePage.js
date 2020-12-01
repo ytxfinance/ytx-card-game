@@ -78,80 +78,87 @@ const Board = (props) => {
 					? 'You lost! Better luck next time!'
 					: 'Game On'}
 			</h1>
+			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
 			<Link
 				className={state.gameOver ? 'margin-bot button-like' : 'hidden'}
 				to="/"
 			>
 				Exit
 			</Link>
-			<div className="game">
-				<div
-					className={
-						state.isAttackMode
-							? 'enemy-stats attack-mode'
-							: 'enemy-stats'
-					}
-					onClick={() => {
-						if (state.isAttackMode) props.attackDirectly();
-					}}
-				>
-					<p>Enemy</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player2.life
-							: state.game.player1.life}
-						&nbsp;HP
-					</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player2.energy
-							: state.game.player1.energy}
-						&nbsp;Energy
-					</p>
-				</div>
-				<div className="my-stats">
-					<p>You</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player1.life
-							: state.game.player2.life}
-						&nbsp;HP
-					</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player1.energy
-							: state.game.player2.energy}
-						&nbsp;Energy
-					</p>
-				</div>
-				<div className="cards-container enemy-cards-container">
-					{state.visualEnemyHand}
-				</div>
-				<div className="field">
+			{state.game ? (
+				<div className="game">
 					<div
 						className={
 							state.isAttackMode
-								? 'enemy-field attack-mode'
-								: 'enemy-field'
+								? 'enemy-stats attack-mode'
+								: 'enemy-stats'
 						}
+						onClick={() => {
+							if (state.isAttackMode) props.attackDirectly();
+						}}
 					>
-						{state.enemyFieldHtml}
+						<p>Enemy</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player2.life
+								: state.game.player1.life}
+							&nbsp;HP
+						</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player2.energy
+								: state.game.player1.energy}
+							&nbsp;Energy
+						</p>
 					</div>
-					<div className="friendly-field">{state.allyFieldHtml}</div>
+					<div className="my-stats">
+						<p>You</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player1.life
+								: state.game.player2.life}
+							&nbsp;HP
+						</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player1.energy
+								: state.game.player2.energy}
+							&nbsp;Energy
+						</p>
+					</div>
+					<div className="cards-container enemy-cards-container">
+						{state.visualEnemyHand}
+					</div>
+					<div className="field">
+						<div
+							className={
+								state.isAttackMode
+									? 'enemy-field attack-mode'
+									: 'enemy-field'
+							}
+						>
+							{state.enemyFieldHtml}
+						</div>
+						<div className="friendly-field">
+							{state.allyFieldHtml}
+						</div>
+					</div>
+					<div className="cards-container ally-cards-container">
+						{state.visualAllyHand}
+					</div>
+					<button
+						className="end-turn"
+						disabled={state.isOtherPlayerTurn || isGamePaused()}
+						onClick={() => {
+							props.endTurn();
+						}}
+					>
+						End Turn
+					</button>
 				</div>
-				<div className="cards-container ally-cards-container">
-					{state.visualAllyHand}
-				</div>
-				<button
-					className="end-turn"
-					disabled={state.isOtherPlayerTurn || isGamePaused()}
-					onClick={() => {
-						props.endTurn();
-					}}
-				>
-					End Turn
-				</button>
-			</div>
+			) : (
+				<p>Game loading...</p>
+			)}
 		</div>
 	);
 };
@@ -173,6 +180,8 @@ export default () => {
 	}, []);
 
 	useEffect(() => {
+		if (!state.game) return;
+
 		let visualEnemyHand;
 		let visualAllyHand;
 		if (state.playerNumber === 2) {
@@ -211,6 +220,8 @@ export default () => {
 
 	// When the attack mode is activate, regenerate the field
 	useEffect(() => {
+		if (!state.game) return;
+
 		const { allyFieldHtml, enemyFieldHtml } = generateFieldCards(
 			state.playerNumber,
 			state.game.player1.field,
@@ -361,12 +372,42 @@ export default () => {
 	};
 
 	const setListeners = () => {
-		state.socket.on('start-turn', () => {
+		state.socket.on('set-state', (data) => {
+			console.log('set-state data', data);
+
+			if (data.game) {
+				dispatch({
+					type: 'SET_GAME',
+					payload: {
+						game: data.game,
+					},
+				});
+			}
+
+			if (data.isOtherPlayerTurn) {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: data.isOtherPlayerTurn,
+					},
+				});
+			}
+		});
+		state.socket.on('start-turn', (data) => {
+			const payload = {
+				isOtherPlayerTurn: false,
+			};
+			if (data.game) {
+				dispatch({
+					type: 'SET_GAME',
+					payload: {
+						game: data.game,
+					},
+				});
+			}
 			dispatch({
 				type: 'SET_IS_OTHER_PLAYER_TURN',
-				payload: {
-					isOtherPlayerTurn: false,
-				},
+				payload,
 			});
 			drawCard();
 		});
@@ -420,30 +461,35 @@ export default () => {
 	};
 
 	const endTurn = () => {
-		const game = { ...state.game };
-		if (state.playerNumber === 1) {
-			game.player1.turn++;
-			// Add a fake card for visual purposes
-			game.player2.hand.push({});
-		} else {
-			game.player2.turn++;
-			// Add a fake card for visual purposes
-			game.player1.hand.push({});
-		}
-		dispatch({
-			type: 'SET_IS_OTHER_PLAYER_TURN',
-			payload: {
-				isOtherPlayerTurn: true,
-			},
-		});
-		dispatch({
-			type: 'SET_GAME',
-			payload: {
-				game,
-			},
-		});
+		// const game = { ...state.game };
+		// console.log('game', game);
+
+		// game.currentTurnNumber += 1;
+		// console.log('game', game);
+
+		// if (state.playerNumber === 1) {
+		// 	game.player1.turn++;
+		// 	// Add a fake card for visual purposes
+		// 	game.player2.hand.push({});
+		// } else {
+		// 	game.player2.turn++;
+		// 	// Add a fake card for visual purposes
+		// 	game.player1.hand.push({});
+		// }
+		// dispatch({
+		// 	type: 'SET_IS_OTHER_PLAYER_TURN',
+		// 	payload: {
+		// 		isOtherPlayerTurn: true,
+		// 	},
+		// });
+		// dispatch({
+		// 	type: 'SET_GAME',
+		// 	payload: {
+		// 		game,
+		// 	},
+		// });
 		state.socket.emit('end-turn', {
-			game,
+			currentGameID: state.game.gameId,
 		});
 	};
 

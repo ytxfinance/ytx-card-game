@@ -168,6 +168,8 @@ io.on('connection', async (socket) => {
 						'player2.hand': cardsPlayer2,
 						'player2.account': data.account,
 						'player2.socketId': socket.id,
+						gameStartTimestamp: Date.now(),
+						currentTurnNumber: 1,
 					},
 				},
 				{
@@ -339,68 +341,101 @@ io.on('connection', async (socket) => {
 		} catch (e) {}
 	});
 	socket.on('end-turn', async (data) => {
+		console.log('end-turn', data.currentGameID);
+		const { currentGameID } = data;
+		let currentGame;
+
+		// Check if the game exists
+		try {
+			currentGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			});
+		} catch (e) {
+			return socket.emit(
+				'user-error',
+				'#28 Game not found from the given game ID',
+			);
+		}
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
-			data.game.player1.socketId,
-			data.game.player2.socketId,
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
 		);
 		if (!stillActive) return;
-		const playerNumber = getPlayerNumber(socket.id, data.game);
+
+		const playerNumber = getPlayerNumber(socket.id, currentGame);
 		let updatedCanAttackField;
 		let set = {
-			'player1.turn': data.game.player1.turn,
-			'player1.field': data.game.player1.field,
-			'player2.turn': data.game.player2.turn,
-			'player2.field': data.game.player2.field,
+			'player1.turn': currentGame.player1.turn++,
+			'player1.field': currentGame.player1.field,
+			'player2.turn': currentGame.player2.turn++,
+			'player2.field': currentGame.player2.field,
+			currentTurnNumber: currentGame.currentTurnNumber + 1,
 		};
+
+		console.log('set', set);
 		if (playerNumber === 0) {
 			return socket.emit(
 				'user-error',
 				'#21 You are not a player of this particular game',
 			);
 		} else if (playerNumber === 1) {
-			updatedCanAttackField = data.game.player2.field.map((card) => {
+			updatedCanAttackField = currentGame.player2.field.map((card) => {
 				card.canAttack = true;
 				return card;
 			});
-			set = {
-				'player2.field': updatedCanAttackField,
-				'player2.energy':
-					data.game.player2.energy + GAME_CONFIG.energyPerTurn,
-			};
+			set['player2.field'] = updatedCanAttackField;
+			set['player2.energy'] =
+				currentGame.player2.energy + GAME_CONFIG.energyPerTurn;
 		} else {
-			updatedCanAttackField = data.game.player1.field.map((card) => {
+			updatedCanAttackField = currentGame.player1.field.map((card) => {
 				card.canAttack = true;
 				return card;
 			});
-			set = {
-				'player1.field': updatedCanAttackField,
-				'player1.energy':
-					data.game.player1.energy + GAME_CONFIG.energyPerTurn,
-			};
+			set['player1.field'] = updatedCanAttackField;
+			set['player1.energy'] =
+				currentGame.player1.energy + GAME_CONFIG.energyPerTurn;
 		}
 		// Update other player's field cards to set canAttack to true
 		// Send start turn to the other player with the updated game
+		let updatedGame;
 		try {
 			await db.collection('games').findOneAndUpdate(
 				{
-					gameId: data.game.gameId,
+					gameId: currentGame.gameId,
 				},
 				{
 					$set: set,
 				},
 			);
+			updatedGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			});
 		} catch (e) {
 			return socket.emit(
 				'user-error',
 				'#25 Error ending turn, try again',
 			);
 		}
+
+		console.log('updatedGame', updatedGame);
 		// Send the start turn
 		if (playerNumber === 1) {
-			io.to(data.game.player2.socketId).emit('start-turn');
+			io.to(currentGame.player2.socketId).emit('start-turn', {
+				game: updatedGame,
+			});
+			io.to(currentGame.player1.socketId).emit('set-state', {
+				game: updatedGame,
+				isOtherPlayerTurn: true,
+			});
 		} else {
-			io.to(data.game.player1.socketId).emit('start-turn');
+			io.to(currentGame.player1.socketId).emit('start-turn', {
+				game: updatedGame,
+			});
+			io.to(currentGame.player2.socketId).emit('set-state', {
+				game: updatedGame,
+				isOtherPlayerTurn: true,
+			});
 		}
 	});
 	socket.on('draw-card', async (data) => {
@@ -572,15 +607,15 @@ io.on('connection', async (socket) => {
 			game: final.value,
 		});
 	});
-	socket.on("attacked-field", async (data) => {
-		console.log("attack field BY", socket.id);
+	socket.on('attacked-field', async (data) => {
+		console.log('attack field BY', socket.id);
 
 		const { currentGameID, attackingCardID, enemyCardID } = data;
 		let currentGame;
 
 		// Check if the game exists
 		try {
-			currentGame = await db.collection("games").findOne({
+			currentGame = await db.collection('games').findOne({
 				gameId: currentGameID,
 			});
 		} catch (e) {
@@ -593,7 +628,7 @@ io.on('connection', async (socket) => {
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
 			currentGame.player1.socketId,
-			currentGame.player2.socketId
+			currentGame.player2.socketId,
 		);
 		if (!stillActive) return;
 
@@ -608,10 +643,10 @@ io.on('connection', async (socket) => {
 
 		const { ally, enemy } = getAllyAndEnemy(playerNumber, currentGame);
 		const attackingCard = ally.field.find(
-			(currentCard) => currentCard.id === attackingCardID
+			(currentCard) => currentCard.id === attackingCardID,
 		);
 		const enemyCard = enemy.field.find(
-			(currentCard) => currentCard.id === enemyCardID
+			(currentCard) => currentCard.id === enemyCardID,
 		);
 
 		const attackingCardIndex = ally.field.indexOf(attackingCard);
@@ -619,25 +654,25 @@ io.on('connection', async (socket) => {
 
 		if (!attackingCard) {
 			return socket.emit(
-				"user-error",
-				"#50 Attacking card could not be found"
+				'user-error',
+				'#50 Attacking card could not be found',
 			);
 		}
 
 		if (!enemyCard) {
 			return socket.emit(
-				"user-error",
-				"#50 Enemy card could not be found"
+				'user-error',
+				'#50 Enemy card could not be found',
 			);
 		}
 
 		const attackingDamageMultiplier = getCardDamageMultiplier(
 			attackingCard.type,
-			enemyCard.type
+			enemyCard.type,
 		);
 		const ememyDamageMultiplier = getCardDamageMultiplier(
 			enemyCard.type,
-			attackingCard.type
+			attackingCard.type,
 		);
 
 		// Reduce attacker's and receiver's card life
@@ -665,8 +700,8 @@ io.on('connection', async (socket) => {
 				},
 				{
 					$set: {
-						"player1.field": currentGame.player1.field,
-						"player2.field": currentGame.player2.field,
+						'player1.field': currentGame.player1.field,
+						'player2.field': currentGame.player2.field,
 					},
 				},
 				{
@@ -680,22 +715,22 @@ io.on('connection', async (socket) => {
 			);
 		}
 
-		io.to(currentGame.player2.socketId).emit("attack-field-received", {
+		io.to(currentGame.player2.socketId).emit('attack-field-received', {
 			game: final.value,
 		});
-		io.to(currentGame.player1.socketId).emit("attack-field-received", {
+		io.to(currentGame.player1.socketId).emit('attack-field-received', {
 			game: final.value,
 		});
 	});
-	socket.on("attack-direct", async (data) => {
-		console.log("attack direct BY", socket.id);
+	socket.on('attack-direct', async (data) => {
+		console.log('attack direct BY', socket.id);
 
 		const { currentGameID, attackingCardID } = data;
 		let currentGame;
 
 		// Check if the game exists
 		try {
-			currentGame = await db.collection("games").findOne({
+			currentGame = await db.collection('games').findOne({
 				gameId: currentGameID,
 			});
 		} catch (e) {
@@ -708,7 +743,7 @@ io.on('connection', async (socket) => {
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
 			currentGame.player1.socketId,
-			currentGame.player2.socketId
+			currentGame.player2.socketId,
 		);
 		if (!stillActive) return;
 
@@ -723,13 +758,13 @@ io.on('connection', async (socket) => {
 
 		const { ally, enemy } = getAllyAndEnemy(playerNumber, currentGame);
 		const attackingCard = ally.field.find(
-			(currentCard) => currentCard.id === attackingCardID
+			(currentCard) => currentCard.id === attackingCardID,
 		);
 
 		if (!attackingCard) {
 			return socket.emit(
-				"user-error",
-				"#50 Attacking card could not be found"
+				'user-error',
+				'#50 Attacking card could not be found',
 			);
 		}
 
@@ -747,18 +782,18 @@ io.on('connection', async (socket) => {
 			winner = playerNumber;
 			set = {
 				status: GAME_STATUS.ENDED,
-				"player1.field": currentGame.player1.field,
-				"player1.life": currentGame.player1.life,
-				"player2.field": currentGame.player2.field,
-				"player2.life": currentGame.player2.life,
+				'player1.field': currentGame.player1.field,
+				'player1.life': currentGame.player1.life,
+				'player2.field': currentGame.player2.field,
+				'player2.life': currentGame.player2.life,
 				gamePaused: true,
 			};
 		} else {
 			set = {
-				"player1.field": currentGame.player1.field,
-				"player1.life": currentGame.player1.life,
-				"player2.field": currentGame.player2.field,
-				"player2.life": currentGame.player2.life,
+				'player1.field': currentGame.player1.field,
+				'player1.life': currentGame.player1.life,
+				'player2.field': currentGame.player2.field,
+				'player2.life': currentGame.player2.life,
 			};
 		}
 		try {
@@ -783,10 +818,10 @@ io.on('connection', async (socket) => {
 		// End the game
 		if (isGameOver) return endGame(io, final.value, winner);
 
-		io.to(currentGame.player2.socketId).emit("attack-direct-received", {
+		io.to(currentGame.player2.socketId).emit('attack-direct-received', {
 			game: final.value,
 		});
-		io.to(currentGame.player1.socketId).emit("attack-direct-received", {
+		io.to(currentGame.player1.socketId).emit('attack-direct-received', {
 			game: final.value,
 		});
 	});
@@ -833,58 +868,58 @@ const getCardDamageMultiplier = (attackerType, victimType) => {
 	// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
 	let damageMultiplier = 1;
 	switch (attackerType) {
-		case "fire":
-			if (victimType == "wind") damageMultiplier = 2;
+		case 'fire':
+			if (victimType == 'wind') damageMultiplier = 2;
 			else if (
-				victimType == "water" ||
-				victimType == "life" ||
-				victimType == "death"
+				victimType == 'water' ||
+				victimType == 'life' ||
+				victimType == 'death'
 			)
 				damageMultiplier = 0.5;
 			break;
-		case "wind":
-			if (victimType == "water") damageMultiplier = 2;
+		case 'wind':
+			if (victimType == 'water') damageMultiplier = 2;
 			else if (
-				victimType == "fire" ||
-				victimType == "life" ||
-				victimType == "death"
+				victimType == 'fire' ||
+				victimType == 'life' ||
+				victimType == 'death'
 			)
 				damageMultiplier = 0.5;
 			break;
-		case "water":
-			if (victimType == "fire") damageMultiplier = 2;
+		case 'water':
+			if (victimType == 'fire') damageMultiplier = 2;
 			else if (
-				victimType == "wind" ||
-				victimType == "life" ||
-				victimType == "death"
+				victimType == 'wind' ||
+				victimType == 'life' ||
+				victimType == 'death'
 			)
 				damageMultiplier = 0.5;
 			break;
-		case "life":
+		case 'life':
 			if (
-				victimType == "fire" ||
-				victimType == "wind" ||
-				victimType == "water" ||
-				victimType == "neutral"
+				victimType == 'fire' ||
+				victimType == 'wind' ||
+				victimType == 'water' ||
+				victimType == 'neutral'
 			)
 				damageMultiplier = 2;
 			break;
-		case "death":
+		case 'death':
 			if (
-				victimType == "fire" ||
-				victimType == "wind" ||
-				victimType == "water" ||
-				victimType == "neutral"
+				victimType == 'fire' ||
+				victimType == 'wind' ||
+				victimType == 'water' ||
+				victimType == 'neutral'
 			)
 				damageMultiplier = 2;
 			break;
-		case "neutral":
+		case 'neutral':
 			if (
-				victimType == "fire" ||
-				victimType == "wind" ||
-				victimType == "water" ||
-				victimType == "life" ||
-				victimType == "death"
+				victimType == 'fire' ||
+				victimType == 'wind' ||
+				victimType == 'water' ||
+				victimType == 'life' ||
+				victimType == 'death'
 			)
 				damageMultiplier = 0.5;
 			break;
@@ -1023,11 +1058,11 @@ const generateInitialCards = () => {
 
 const endGame = (io, game, winner) => {
 	// Send the winner emit event
-	io.to(game.player1.socketId).emit("game-over", {
+	io.to(game.player1.socketId).emit('game-over', {
 		winner,
 		game,
 	});
-	io.to(game.player2.socketId).emit("game-over", {
+	io.to(game.player2.socketId).emit('game-over', {
 		winner,
 		game,
 	});

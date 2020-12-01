@@ -633,8 +633,8 @@ io.on("connection", async (socket) => {
 	});
 	socket.on("attack-direct", async (data) => {
 		console.log("attack direct BY", socket.id);
-    const { currentGame, attackingCardID } = data;
-    
+		const { currentGame, attackingCardID } = data;
+
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
 			currentGame.player1.socketId,
@@ -895,16 +895,16 @@ const generateInitialCards = () => {
 	return { cardsPlayer1, cardsPlayer2 };
 };
 
-const endGame = (io, final, winner) => {
+const endGame = (io, game, winner) => {
 	// Send the winner emit event
-	io.to(final.player1.socketId).emit("game-over", {
+	io.to(game.player1.socketId).emit("game-over", {
 		winner,
-		game: final,
+		game,
 	});
-	io.to(final.player2.socketId).emit("game-over", {
+	io.to(game.player2.socketId).emit("game-over", {
 		winner,
-		game: final,
-	});
+		game,
+  });
 	// TODO Send earned YTX tokens to the winner while keeping a 10% to the game treasury, dev treasury and LP Locked fees
 };
 

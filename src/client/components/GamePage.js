@@ -632,11 +632,6 @@ export default () => {
 		console.log("Attack directly executed");
 		const currentGame = state.game;
 
-		let ally = null;
-		let enemy = null;
-		let allyUpdatedField = [];
-		let card;
-		let updatedLife;
 		if (!currentGame) {
 			return dispatch({
 				type: "SET_ERROR",
@@ -655,15 +650,10 @@ export default () => {
 			});
 		}
 
-		// dispatch({
-		// 	type: "SET_GAME",
-		// 	payload: {
-		// 		game: currentGame,
-		// 	},
-		// });
+    // Disables the selected card from attacking again
 		toggleAttackMode(0);
 
-		// Check if a winner is elected
+		// Notify server of attack direct action by player
 		state.socket.emit("attack-direct", {
 			currentGame,
 			attackingCardID: state.attackingCardId,

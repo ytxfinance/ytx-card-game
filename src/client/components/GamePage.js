@@ -1,13 +1,13 @@
-import React, { useContext, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import GAME_CONFIG from "../../../GAME_CONFIG.json";
-import { store } from "./Store";
+import React, { useContext, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import GAME_CONFIG from '../../../GAME_CONFIG.json';
+import { store } from './Store';
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField;
 const MIN_CARD_LIFE = GAME_CONFIG.minCardLife;
 const MAX_CARD_LIFE = GAME_CONFIG.maxCardLife;
 const MAX_CARD_ATTACK = GAME_CONFIG.maxCardAttack;
 const MIN_CARD_ATTACK = GAME_CONFIG.minCardAttack;
-const CARD_TYPES = ["fire", "water", "wind", "life", "death", "neutral"];
+const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral'];
 
 // The individual Card component
 const Card = (props) => {
@@ -46,7 +46,7 @@ const Card = (props) => {
 		);
 	}
 	return (
-		<div className={"card " + props.type} data-id={props.dataId}>
+		<div className={'card ' + props.type} data-id={props.dataId}>
 			<div>cost: {props.cost}</div>
 			<div>life: {props.life}</div>
 			<div>attack: {props.attack}</div>
@@ -66,20 +66,20 @@ const Board = (props) => {
 			<h1
 				className={
 					state.gameOver && state.areYouTheWinner
-						? "winner-message"
+						? 'winner-message'
 						: state.gameOver && !state.areYouTheWinner
-						? "loser-message"
-						: ""
+						? 'loser-message'
+						: ''
 				}
 			>
 				{state.gameOver && state.areYouTheWinner
-					? "Congratulations! You are the winner!"
+					? 'Congratulations! You are the winner!'
 					: state.gameOver && !state.areYouTheWinner
-					? "You lost! Better luck next time!"
-					: "Game On"}
+					? 'You lost! Better luck next time!'
+					: 'Game On'}
 			</h1>
 			<Link
-				className={state.gameOver ? "margin-bot button-like" : "hidden"}
+				className={state.gameOver ? 'margin-bot button-like' : 'hidden'}
 				to="/"
 			>
 				Exit
@@ -88,8 +88,8 @@ const Board = (props) => {
 				<div
 					className={
 						state.isAttackMode
-							? "enemy-stats attack-mode"
-							: "enemy-stats"
+							? 'enemy-stats attack-mode'
+							: 'enemy-stats'
 					}
 					onClick={() => {
 						if (state.isAttackMode) props.attackDirectly();
@@ -131,8 +131,8 @@ const Board = (props) => {
 					<div
 						className={
 							state.isAttackMode
-								? "enemy-field attack-mode"
-								: "enemy-field"
+								? 'enemy-field attack-mode'
+								: 'enemy-field'
 						}
 					>
 						{state.enemyFieldHtml}
@@ -163,7 +163,7 @@ export default () => {
 	useEffect(() => {
 		if (state.playerNumber === 2) {
 			dispatch({
-				type: "SET_IS_OTHER_PLAYER_TURN",
+				type: 'SET_IS_OTHER_PLAYER_TURN',
 				payload: {
 					isOtherPlayerTurn: true,
 				},
@@ -176,18 +176,32 @@ export default () => {
 		let visualEnemyHand;
 		let visualAllyHand;
 		if (state.playerNumber === 2) {
-			visualEnemyHand = state.game.player1.hand.map(() => (
-				<div className="card" key={Math.random()}></div>
-			));
+			visualEnemyHand =
+				state.game.player1.hand.length > 0
+					? state.game.player1.hand.map(() => (
+							<div className="card" key={Math.random()}></div>
+					  ))
+					: [
+							<div className="empty-hand" key={Math.random()}>
+								Empty hand
+							</div>,
+					  ];
 			visualAllyHand = generateHandCards(state.game.player2.hand, 2);
 		} else {
-			visualEnemyHand = state.game.player2.hand.map(() => (
-				<div className="card" key={Math.random()}></div>
-			));
+			visualEnemyHand =
+				state.game.player2.hand.length > 0
+					? state.game.player2.hand.map(() => (
+							<div className="card" key={Math.random()}></div>
+					  ))
+					: [
+							<div className="empty-hand" key={Math.random()}>
+								Empty hand
+							</div>,
+					  ];
 			visualAllyHand = generateHandCards(state.game.player1.hand, 1);
 		}
 		dispatch({
-			type: "SET_HAND_CARDS",
+			type: 'SET_HAND_CARDS',
 			payload: {
 				visualEnemyHand,
 				visualAllyHand,
@@ -201,10 +215,10 @@ export default () => {
 			state.playerNumber,
 			state.game.player1.field,
 			state.game.player2.field,
-			state.isOtherPlayerTurn
+			state.isOtherPlayerTurn,
 		);
 		dispatch({
-			type: "SET_FIELDS",
+			type: 'SET_FIELDS',
 			payload: {
 				allyFieldHtml,
 				enemyFieldHtml,
@@ -217,9 +231,9 @@ export default () => {
 		playerNumber,
 		player1Field,
 		player2Field,
-		isOtherPlayerTurn
+		isOtherPlayerTurn,
 	) => {
-		console.log("generate field cards");
+		console.log('generate field cards');
 		let allySortedField = Array(FIELD_SIZE).fill(0);
 		let enemySortedField = Array(FIELD_SIZE).fill(0);
 		let allyFieldHtml = [];
@@ -288,9 +302,9 @@ export default () => {
 							}}
 						/>
 					) : (
-						""
+						''
 					)}
-				</div>
+				</div>,
 			);
 			enemyFieldHtml.push(
 				<div
@@ -314,9 +328,9 @@ export default () => {
 							}}
 						/>
 					) : (
-						""
+						''
 					)}
-				</div>
+				</div>,
 			);
 		}
 
@@ -338,55 +352,59 @@ export default () => {
 							}}
 						/>
 				  ))
-				: [<div className="card" key={Math.random()}></div>];
+				: [
+						<div className="empty-hand" key={Math.random()}>
+							Empty hand
+						</div>,
+				  ];
 		return cards;
 	};
 
 	const setListeners = () => {
-		state.socket.on("start-turn", () => {
+		state.socket.on('start-turn', () => {
 			dispatch({
-				type: "SET_IS_OTHER_PLAYER_TURN",
+				type: 'SET_IS_OTHER_PLAYER_TURN',
 				payload: {
 					isOtherPlayerTurn: false,
 				},
 			});
 			drawCard();
 		});
-		state.socket.on("draw-card-received", (data) => {
+		state.socket.on('draw-card-received', (data) => {
 			dispatch({
-				type: "SET_GAME",
+				type: 'SET_GAME',
 				payload: {
 					game: data.game,
 				},
 			});
 		});
-		state.socket.on("card-invoke-received", (data) => {
+		state.socket.on('card-invoke-received', (data) => {
 			dispatch({
-				type: "SET_GAME",
+				type: 'SET_GAME',
 				payload: {
 					game: data.game,
 				},
 			});
 		});
-		state.socket.on("attack-field-received", (data) => {
+		state.socket.on('attack-field-received', (data) => {
 			dispatch({
-				type: "SET_GAME",
+				type: 'SET_GAME',
 				payload: {
 					game: data.game,
 				},
 			});
 		});
-		state.socket.on("attack-direct-received", (data) => {
+		state.socket.on('attack-direct-received', (data) => {
 			dispatch({
-				type: "SET_GAME",
+				type: 'SET_GAME',
 				payload: {
 					game: data.game,
 				},
 			});
 		});
-		state.socket.on("game-over", (data) => {
+		state.socket.on('game-over', (data) => {
 			dispatch({
-				type: "SET_GAME",
+				type: 'SET_GAME',
 				payload: {
 					game: data.game,
 				},
@@ -413,31 +431,31 @@ export default () => {
 			game.player1.hand.push({});
 		}
 		dispatch({
-			type: "SET_IS_OTHER_PLAYER_TURN",
+			type: 'SET_IS_OTHER_PLAYER_TURN',
 			payload: {
 				isOtherPlayerTurn: true,
 			},
 		});
 		dispatch({
-			type: "SET_GAME",
+			type: 'SET_GAME',
 			payload: {
 				game,
 			},
 		});
-		state.socket.emit("end-turn", {
+		state.socket.emit('end-turn', {
 			game,
 		});
 	};
 
 	const drawCard = () => {
 		// We just check the socket id to determine which user is drawing
-		state.socket.emit("draw-card", {
+		state.socket.emit('draw-card', {
 			game: state.game,
 		});
 	};
 
 	const invokeCard = (card) => {
-		console.log("invoke card", card);
+		console.log('invoke card', card);
 		let me;
 		if (state.playerNumber === 1) {
 			me = state.game.player1;
@@ -447,22 +465,22 @@ export default () => {
 		// Invokes a card into the field and updates ally hand with a new deep copy
 		if (me.field.length >= FIELD_SIZE) {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
-					error: "The field is full",
+					error: 'The field is full',
 				},
 			});
 		}
 		if (card.cost > me.energy) {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
 					error: "You don't have enough energy to invoke this card",
 				},
 			});
 		}
 		card.isInvoked = true;
-		state.socket.emit("invoke-card", {
+		state.socket.emit('invoke-card', {
 			game: state.game,
 			card,
 		});
@@ -470,7 +488,7 @@ export default () => {
 
 	const toggleAttackMode = (cardId) => {
 		dispatch({
-			type: "SET_ATTACK_MODE",
+			type: 'SET_ATTACK_MODE',
 			payload: {
 				isAttackMode: !state.isAttackMode,
 				attackingCardId: cardId,
@@ -482,58 +500,58 @@ export default () => {
 		// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
 		let damageMultiplier = 1;
 		switch (attackerType) {
-			case "fire":
-				if (victimType == "wind") damageMultiplier = 2;
+			case 'fire':
+				if (victimType == 'wind') damageMultiplier = 2;
 				else if (
-					victimType == "water" ||
-					victimType == "life" ||
-					victimType == "death"
+					victimType == 'water' ||
+					victimType == 'life' ||
+					victimType == 'death'
 				)
 					damageMultiplier = 0.5;
 				break;
-			case "wind":
-				if (victimType == "water") damageMultiplier = 2;
+			case 'wind':
+				if (victimType == 'water') damageMultiplier = 2;
 				else if (
-					victimType == "fire" ||
-					victimType == "life" ||
-					victimType == "death"
+					victimType == 'fire' ||
+					victimType == 'life' ||
+					victimType == 'death'
 				)
 					damageMultiplier = 0.5;
 				break;
-			case "water":
-				if (victimType == "fire") damageMultiplier = 2;
+			case 'water':
+				if (victimType == 'fire') damageMultiplier = 2;
 				else if (
-					victimType == "wind" ||
-					victimType == "life" ||
-					victimType == "death"
+					victimType == 'wind' ||
+					victimType == 'life' ||
+					victimType == 'death'
 				)
 					damageMultiplier = 0.5;
 				break;
-			case "life":
+			case 'life':
 				if (
-					victimType == "fire" ||
-					victimType == "wind" ||
-					victimType == "water" ||
-					victimType == "neutral"
+					victimType == 'fire' ||
+					victimType == 'wind' ||
+					victimType == 'water' ||
+					victimType == 'neutral'
 				)
 					damageMultiplier = 2;
 				break;
-			case "death":
+			case 'death':
 				if (
-					victimType == "fire" ||
-					victimType == "wind" ||
-					victimType == "water" ||
-					victimType == "neutral"
+					victimType == 'fire' ||
+					victimType == 'wind' ||
+					victimType == 'water' ||
+					victimType == 'neutral'
 				)
 					damageMultiplier = 2;
 				break;
-			case "neutral":
+			case 'neutral':
 				if (
-					victimType == "fire" ||
-					victimType == "wind" ||
-					victimType == "water" ||
-					victimType == "life" ||
-					victimType == "death"
+					victimType == 'fire' ||
+					victimType == 'wind' ||
+					victimType == 'water' ||
+					victimType == 'life' ||
+					victimType == 'death'
 				)
 					damageMultiplier = 0.5;
 				break;
@@ -545,29 +563,29 @@ export default () => {
 	 * @dev Handles the logic for attacking the enemy field card
 	 */
 	const attackField = (target) => {
-		console.log("Attack Field executed");
+		console.log('Attack Field executed');
 		const currentGame = state.game;
 
 		if (!currentGame) {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
-					error: "Current game not found",
+					error: 'Current game not found',
 				},
 			});
 		}
 
-		if (currentGame.status === "ENDED") {
+		if (currentGame.status === 'ENDED') {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
-					error: "Game is already over.",
+					error: 'Game is already over.',
 				},
 			});
 		}
 		// Disables the selected card from attacking again
 		toggleAttackMode(0);
-		state.socket.emit("attacked-field", {
+		state.socket.emit('attacked-field', {
 			currentGameID: currentGame.gameId,
 			attackingCardID: state.attackingCardId,
 			enemyCardID: target.firstChild.dataset.id,
@@ -578,23 +596,23 @@ export default () => {
 	 * @dev Handles the logic for directly attacking the enemy player
 	 */
 	const attackDirectly = () => {
-		console.log("Attack directly executed");
+		console.log('Attack directly executed');
 		const currentGame = state.game;
 
 		if (!currentGame) {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
-					error: "Current game not found",
+					error: 'Current game not found',
 				},
 			});
 		}
 
-		if (currentGame.status === "ENDED") {
+		if (currentGame.status === 'ENDED') {
 			return dispatch({
-				type: "SET_ERROR",
+				type: 'SET_ERROR',
 				payload: {
-					error: "Game is already over.",
+					error: 'Game is already over.',
 				},
 			});
 		}
@@ -603,7 +621,7 @@ export default () => {
 		toggleAttackMode(0);
 
 		// Notify server of attack direct action by player
-		state.socket.emit("attack-direct", {
+		state.socket.emit('attack-direct', {
 			currentGameID: currentGame.gameId,
 			attackingCardID: state.attackingCardId,
 		});
@@ -620,7 +638,7 @@ export default () => {
 						YTX have been moved to the treasury!
 					</p>
 					<button>Redeem Earnings & Exit</button>
-				</div>
+				</div>,
 			);
 		} else {
 			// Display the you lost container
@@ -629,7 +647,7 @@ export default () => {
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
 					<Link to="/">Exit</Link>
-				</div>
+				</div>,
 			);
 		}
 	};

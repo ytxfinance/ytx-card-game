@@ -407,7 +407,6 @@ io.on('connection', async (socket) => {
 	});
 	socket.on('draw-card', async (data) => {
 		console.log('draw hand BY', socket.id);
-		console.log(data.game.player1.turn, data.game.player2.turn);
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
 			data.game.player1.socketId,

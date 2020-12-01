@@ -620,6 +620,9 @@ export default () => {
 		});
 	};
 
+	/**
+	 * @dev Handles the logic for directly attacking the enemy player
+	 */
 	const attackDirectly = () => {
 		console.log("Attack directly executed");
 		const currentGame = state.game;
@@ -647,53 +650,18 @@ export default () => {
 			});
 		}
 
-		if (state.playerNumber === 1) {
-			ally = currentGame.player1;
-			enemy = currentGame.player2;
-		} else {
-			ally = currentGame.player2;
-			enemy = currentGame.player1;
-		}
-
-		// Find card stats by searching in the field
-		ally.field.map((currentCard) => {
-			if (currentCard.id == state.attackingCardId) {
-				card = currentCard;
-			}
-		});
-		updatedLife = enemy.life - card.attack;
-		ally.field.map((currentCard) => {
-			if (currentCard.id == card.id) {
-				// Update the attacking card's property canAttack since you can only attack once per turn
-				currentCard.canAttack = false;
-			}
-			allyUpdatedField.push(currentCard);
-		});
-
-		if (state.playerNumber === 1) {
-			currentGame.player1.field = allyUpdatedField;
-			currentGame.player2.life = updatedLife;
-		} else {
-			currentGame.player2.field = allyUpdatedField;
-			currentGame.player1.life = updatedLife;
-		}
-
-		// Check if the life is gone and if so end the game
-		if (updatedLife <= 0) {
-			currentGame.gamePaused = true;
-		}
-
-		dispatch({
-			type: "SET_GAME",
-			payload: {
-				game: currentGame,
-			},
-		});
+		// dispatch({
+		// 	type: "SET_GAME",
+		// 	payload: {
+		// 		game: currentGame,
+		// 	},
+		// });
 		toggleAttackMode(0);
 
 		// Check if a winner is elected
 		state.socket.emit("attack-direct", {
-			game: currentGame,
+			currentGame,
+			attackingCardID: state.attackingCardId,
 		});
 	};
 

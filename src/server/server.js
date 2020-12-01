@@ -633,21 +633,19 @@ io.on("connection", async (socket) => {
 	});
 	socket.on("attack-direct", async (data) => {
 		console.log("attack direct BY", socket.id);
+    const { currentGame, attackingCardID } = data;
+    
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
-			data.game.player1.socketId,
-			data.game.player2.socketId
+			currentGame.player1.socketId,
+			currentGame.player2.socketId
 		);
 		if (!stillActive) return;
-		const playerNumber = getPlayerNumber(socket.id, data.game);
-		let final;
-		let isGameOver;
-		let winner;
-		let set;
+
 		// Check if the game exists
 		try {
 			await db.collection("games").findOne({
-				gameId: data.game.gameId,
+				gameId: currentGame.gameId,
 			});
 		} catch (e) {
 			return socket.emit(
@@ -655,6 +653,9 @@ io.on("connection", async (socket) => {
 				"#28 Game not found from the given game ID"
 			);
 		}
+
+		const playerNumber = getPlayerNumber(socket.id, currentGame);
+
 		if (playerNumber === 0) {
 			return socket.emit(
 				"user-error",
@@ -662,30 +663,50 @@ io.on("connection", async (socket) => {
 			);
 		}
 
+		const { ally, enemy } = getAllyAndEnemy(playerNumber, currentGame);
+		const attackingCard = ally.field.find(
+			(currentCard) => currentCard.id === attackingCardID
+		);
+
+		if (!attackingCard) {
+			return socket.emit(
+				"user-error",
+				"#50 Attacking card could not be found"
+			);
+		}
+
+		enemy.life = enemy.life - attackingCard.attack; // The attacking card deducting the life points of the enemy player
+		attackingCard.canAttack = false; // Disabling the attacking card from attacking again
+
+		let isGameOver = false;
+		let final;
+		let winner;
+		let set;
+
 		// Check if the life is gone and if so end the game
-		if (data.game.player1.life <= 0 || data.game.player2.life <= 0) {
+		if (enemy.life <= 0) {
 			isGameOver = true;
-			data.game.player1.life <= 0 ? (winner = 2) : (winner = 1);
+			winner = playerNumber;
 			set = {
 				status: GAME_STATUS.ENDED,
-				"player1.field": data.game.player1.field,
-				"player1.life": data.game.player1.life,
-				"player2.field": data.game.player2.field,
-				"player2.life": data.game.player2.life,
+				"player1.field": currentGame.player1.field,
+				"player1.life": currentGame.player1.life,
+				"player2.field": currentGame.player2.field,
+				"player2.life": currentGame.player2.life,
 				gamePaused: true,
 			};
 		} else {
 			set = {
-				"player1.field": data.game.player1.field,
-				"player1.life": data.game.player1.life,
-				"player2.field": data.game.player2.field,
-				"player2.life": data.game.player2.life,
+				"player1.field": currentGame.player1.field,
+				"player1.life": currentGame.player1.life,
+				"player2.field": currentGame.player2.field,
+				"player2.life": currentGame.player2.life,
 			};
 		}
 		try {
 			final = await db.collection("games").findOneAndUpdate(
 				{
-					gameId: data.game.gameId,
+					gameId: currentGame.gameId,
 				},
 				{
 					$set: set,
@@ -704,15 +725,12 @@ io.on("connection", async (socket) => {
 		// End the game
 		if (isGameOver) return endGame(io, final.value, winner);
 
-		if (playerNumber === 1) {
-			io.to(data.game.player2.socketId).emit("attack-direct-received", {
-				game: final.value,
-			});
-		} else {
-			io.to(data.game.player1.socketId).emit("attack-direct-received", {
-				game: final.value,
-			});
-		}
+		io.to(currentGame.player2.socketId).emit("attack-direct-received", {
+			game: final.value,
+		});
+		io.to(currentGame.player1.socketId).emit("attack-direct-received", {
+			game: final.value,
+		});
 	});
 });
 
@@ -725,6 +743,27 @@ const getPlayerNumber = (socketId, game) => {
 	} else {
 		return 0;
 	}
+};
+
+/**
+ * @dev Gets the ally and enemy player object based on the player number
+ *
+ * @param playerNumber The player number, valid values are 1 or 2
+ * @param game The current game object
+ */
+const getAllyAndEnemy = (playerNumber, game) => {
+	let ally,
+		enemy = null;
+
+	if (playerNumber === 1) {
+		ally = game.player1;
+		enemy = game.player2;
+	} else if (playerNumber === 2) {
+		ally = game.player2;
+		enemy = game.player1;
+	}
+
+	return { ally, enemy };
 };
 
 // Returns false if one or more are innactive

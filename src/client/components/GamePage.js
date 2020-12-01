@@ -403,6 +403,12 @@ export default () => {
 			});
 		});
 		state.socket.on('game-over', (data) => {
+			dispatch({
+				type: 'SET_GAME',
+				payload: {
+					game: data.game,
+				},
+			});
 			// If the winner is this player, emit 'you win' message
 			if (state.playerNumber === data.winner) {
 				endGame(true);
@@ -410,7 +416,6 @@ export default () => {
 				// Emit 'you lose' message
 				endGame(false);
 			}
-			// data.game
 		});
 	};
 
@@ -554,99 +559,46 @@ export default () => {
 		return damageMultiplier;
 	};
 
+	/**
+	 * @dev Handles the logic for attacking the enemy field card
+	 */
 	const attackField = (target) => {
-		// Find card stats by searching in the field
-		let victim = null;
-		let attacker = null;
-		let allyUpdatedField = [];
-		let enemyUpdatedField = [];
-		let ally = {};
-		let enemy = {};
+		console.log('Attack Field executed');
+		const currentGame = state.game;
 
-		if (state.playerNumber === 1) {
-			ally = state.game.player1;
-			enemy = state.game.player2;
-		} else {
-			ally = state.game.player2;
-			enemy = state.game.player1;
-		}
-		enemy.field.map((currentCard) => {
-			if (
-				target.firstChild &&
-				currentCard.id == target.firstChild.dataset.id
-			) {
-				victim = currentCard;
-			}
-		});
-
-		if (!victim) return toggleAttackMode(0);
-
-		ally.field.map((currentCard) => {
-			if (currentCard.id == state.attackingCardId) {
-				attacker = currentCard;
-			}
-		});
-		let attackingDamageMultiplier = getDamageMultiplier(
-			attacker.type,
-			victim.type,
-		);
-		let victimDamageMultiplier = getDamageMultiplier(
-			victim.type,
-			attacker.type,
-		);
-
-		// Reduce attacker's and receiver's card life
-		victim.life = victim.life - attacker.attack * attackingDamageMultiplier;
-		attacker.life = attacker.life - victim.attack * victimDamageMultiplier;
-		attacker.canAttack = false;
-
-		// Update the field by deleting the destroyed cards, we don't care bout those, they are gone forever
-		enemy.field.map((currentCard) => {
-			let addCard = true;
-			if (currentCard.id == target.firstChild.dataset.id) {
-				if (victim.life <= 0) addCard = false;
-			}
-			if (addCard) enemyUpdatedField.push(Object.assign({}, currentCard));
-		});
-		ally.field.map((currentCard) => {
-			let addCard = true;
-			if (currentCard.id == state.attackingCardId) {
-				if (attacker.life <= 0) addCard = false;
-			}
-			if (addCard) allyUpdatedField.push(Object.assign({}, currentCard));
-		});
-
-		let copyGame = { ...state.game };
-		if (state.playerNumber === 1) {
-			copyGame.player1.field = allyUpdatedField;
-			copyGame.player2.field = enemyUpdatedField;
-		} else {
-			copyGame.player2.field = allyUpdatedField;
-			copyGame.player1.field = enemyUpdatedField;
+		if (!currentGame) {
+			return dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: 'Current game not found',
+				},
+			});
 		}
 
-		dispatch({
-			type: 'SET_GAME',
-			payload: {
-				game: copyGame,
-			},
-		});
+		if (currentGame.status === 'ENDED') {
+			return dispatch({
+				type: 'SET_ERROR',
+				payload: {
+					error: 'Game is already over.',
+				},
+			});
+		}
+		// Disables the selected card from attacking again
 		toggleAttackMode(0);
-
 		state.socket.emit('attacked-field', {
-			game: copyGame,
+			currentGameID: currentGame.gameId,
+			attackingCardID: state.attackingCardId,
+			enemyCardID: target.firstChild.dataset.id,
 		});
 	};
 
+	/**
+	 * @dev Handles the logic for directly attacking the enemy player
+	 */
 	const attackDirectly = () => {
 		console.log('Attack directly executed');
 		const currentGame = state.game;
 
-		let ally = null;
-		let enemy = null;
-		let allyUpdatedField = [];
-		let card;
-		let updatedLife;
 		if (!currentGame) {
 			return dispatch({
 				type: 'SET_ERROR',
@@ -665,53 +617,13 @@ export default () => {
 			});
 		}
 
-		if (state.playerNumber === 1) {
-			ally = currentGame.player1;
-			enemy = currentGame.player2;
-		} else {
-			ally = currentGame.player2;
-			enemy = currentGame.player1;
-		}
-
-		// Find card stats by searching in the field
-		ally.field.map((currentCard) => {
-			if (currentCard.id == state.attackingCardId) {
-				card = currentCard;
-			}
-		});
-		updatedLife = enemy.life - card.attack;
-		ally.field.map((currentCard) => {
-			if (currentCard.id == card.id) {
-				// Update the attacking card's property canAttack since you can only attack once per turn
-				currentCard.canAttack = false;
-			}
-			allyUpdatedField.push(currentCard);
-		});
-
-		if (state.playerNumber === 1) {
-			currentGame.player1.field = allyUpdatedField;
-			currentGame.player2.life = updatedLife;
-		} else {
-			currentGame.player2.field = allyUpdatedField;
-			currentGame.player1.life = updatedLife;
-		}
-
-		// Check if the life is gone and if so end the game
-		if (updatedLife <= 0) {
-			currentGame.gamePaused = true;
-		}
-
-		dispatch({
-			type: 'SET_GAME',
-			payload: {
-				game: currentGame,
-			},
-		});
+		// Disables the selected card from attacking again
 		toggleAttackMode(0);
 
-		// Check if a winner is elected
+		// Notify server of attack direct action by player
 		state.socket.emit('attack-direct', {
-			game: currentGame,
+			currentGameID: currentGame.gameId,
+			attackingCardID: state.attackingCardId,
 		});
 	};
 

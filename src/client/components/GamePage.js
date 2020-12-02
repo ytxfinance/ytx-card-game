@@ -486,6 +486,7 @@ export default () => {
 	};
 
 	const endTurn = () => {
+		toggleAttackMode(0);
 		const game = { ...state.game };
 
 		if (state.playerNumber === 1) {
@@ -554,10 +555,11 @@ export default () => {
 	};
 
 	const toggleAttackMode = (cardId) => {
+		let isAttackMode = cardId == 0 ? false : !state.isAttackMode;
 		dispatch({
 			type: 'SET_ATTACK_MODE',
 			payload: {
-				isAttackMode: !state.isAttackMode,
+				isAttackMode,
 				attackingCardId: cardId,
 			},
 		});

@@ -460,7 +460,10 @@ io.on('connection', async (socket) => {
 		);
 		if (!stillActive) return;
 		const playerNumber = getPlayerNumber(socket.id, data.game);
-		const newCard = generateOneCard(Math.random() + 1, playerNumber);
+		const newCard = generateOneCard(
+			Date.now().toString() + enemyLastCardId * 2,
+			playerNumber,
+		);
 		let copyHand = [];
 		let updatedGame;
 		try {
@@ -1042,7 +1045,7 @@ const generateOneCard = (index, playerNumberOwner) => {
 	let cost = 1 + addLifePoints + addAttackPoints;
 
 	let card = {
-		id: `card-${index + 1}`,
+		id: `card-${index}`,
 		isInvoked: false,
 		canAttack: false,
 		cost,
@@ -1058,12 +1061,15 @@ const generateInitialCards = () => {
 	let cardsPlayer1 = [];
 	let cardsPlayer2 = [];
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		const card = generateOneCard(i, 1);
+		const card = generateOneCard(Date.now().toString() + i, 1);
 		cardsPlayer1.push(card);
 	}
 
 	for (let i = 0; i < GAME_CONFIG.initialCardsInHand; i++) {
-		const card = generateOneCard(GAME_CONFIG.initialCardsInHand + i, 2);
+		const card = generateOneCard(
+			Date.now().toString() + (GAME_CONFIG.initialCardsInHand + i),
+			2,
+		);
 		cardsPlayer2.push(card);
 	}
 	return { cardsPlayer1, cardsPlayer2 };

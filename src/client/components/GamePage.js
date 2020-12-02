@@ -189,13 +189,27 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
+			const turnTimeLimit = new Date(
+				state.game.currentTurnTimeLimitTimestamp,
+			);
+
 			console.log('setTimeout running', turnCountdownTimer);
+
 			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
 				endTurn();
 				setTurnCountdownTimer(SECONDS_PER_TURN);
 				return;
 			}
-			setTurnCountdownTimer(turnCountdownTimer - 1);
+			const newTime = Math.ceil(
+				(turnTimeLimit.getTime() - Date.now()) / 1000,
+			);
+
+			// If for whatever reason the newTime is negative we will set it to 0
+			if (newTime < 0) {
+				setTurnCountdownTimer(0);
+				return;
+			}
+			setTurnCountdownTimer(newTime);
 		}, 1000);
 		return () => {
 			clearTimeout(countdownTimer);

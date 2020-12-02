@@ -162,6 +162,7 @@ io.on('connection', async (socket) => {
 		// Find the game and update it
 		try {
 			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards();
+			const currentTimestamp = Date.now();
 			game = await db.collection('games').findOneAndUpdate(
 				{
 					gameId: data.gameId,
@@ -173,10 +174,13 @@ io.on('connection', async (socket) => {
 						'player2.hand': cardsPlayer2,
 						'player2.account': data.account,
 						'player2.socketId': socket.id,
-						gameStartTimestamp: Date.now(),
+						gameStartTimestamp: currentTimestamp,
 						currentTurnNumber: 1,
 						currentPlayerTurn: 1,
-						currentTurnStartTimestamp: Date.now(),
+						currentTurnStartTimestamp: currentTimestamp,
+						currentTurnTimeLimitTimestamp:
+							currentTimestamp +
+							GAME_CONFIG.secondsPerTurn * 1000,
 					},
 				},
 				{
@@ -372,6 +376,7 @@ io.on('connection', async (socket) => {
 
 		const playerNumber = getPlayerNumber(socket.id, currentGame);
 		let updatedCanAttackField;
+		const currentTimestamp = Date.now();
 		let set = {
 			'player1.turn': currentGame.player1.turn,
 			'player1.field': currentGame.player1.field,
@@ -381,7 +386,9 @@ io.on('connection', async (socket) => {
 			'player2.hand': currentGame.player2.hand,
 			currentTurnNumber: currentGame.currentTurnNumber + 1,
 			currentPlayerTurn: swapPlayerTurn(currentGame.currentPlayerTurn),
-			currentTurnStartTimestamp: Date.now(),
+			currentTurnStartTimestamp: currentTimestamp,
+			currentTurnTimeLimitTimestamp:
+				currentTimestamp + GAME_CONFIG.secondsPerTurn * 1000,
 		};
 
 		if (playerNumber === 0) {

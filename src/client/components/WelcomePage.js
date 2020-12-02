@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
-import GameList from './GameList';
+import React, { Component } from 'react'
+import { Link } from 'react-router-dom'
+import GameList from './GameList'
 
 export default class WelcomePage extends Component {
 	constructor(props) {
-		super(props);
+		super(props)
 	}
 
 	render() {
@@ -19,6 +19,6 @@ export default class WelcomePage extends Component {
 
 				<GameList />
 			</div>
-		);
+		)
 	}
 }

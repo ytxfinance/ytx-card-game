@@ -52,9 +52,9 @@ app.use('*', (req, res, next) => {
 });
 
 app.post('/github-push', (req, res) => {
-	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {})
-	res.status(200).send("Ok")
-})
+	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {});
+	res.status(200).send('Ok');
+});
 
 app.get('/build.js', (req, res) => {
 	return res.sendFile(path.join(__dirname, '../../dist/build.js'));
@@ -175,6 +175,8 @@ io.on('connection', async (socket) => {
 						'player2.socketId': socket.id,
 						gameStartTimestamp: Date.now(),
 						currentTurnNumber: 1,
+						currentPlayerTurn: 1,
+						currentTurnStartTimestamp: Date.now(),
 					},
 				},
 				{
@@ -378,9 +380,10 @@ io.on('connection', async (socket) => {
 			'player2.field': currentGame.player2.field,
 			'player2.hand': currentGame.player2.hand,
 			currentTurnNumber: currentGame.currentTurnNumber + 1,
+			currentPlayerTurn: swapPlayerTurn(currentGame.currentPlayerTurn),
+			currentTurnStartTimestamp: Date.now(),
 		};
 
-		console.log('set', set);
 		if (playerNumber === 0) {
 			return socket.emit(
 				'user-error',
@@ -432,24 +435,13 @@ io.on('connection', async (socket) => {
 		}
 
 		console.log('updatedGame', updatedGame);
-		// Send the start turn
-		if (playerNumber === 1) {
-			io.to(currentGame.player2.socketId).emit('start-turn', {
-				game: updatedGame,
-			});
-			io.to(currentGame.player1.socketId).emit('set-state', {
-				game: updatedGame,
-				isOtherPlayerTurn: true,
-			});
-		} else {
-			io.to(currentGame.player1.socketId).emit('start-turn', {
-				game: updatedGame,
-			});
-			io.to(currentGame.player2.socketId).emit('set-state', {
-				game: updatedGame,
-				isOtherPlayerTurn: true,
-			});
-		}
+		// Notify client of the start of new turn
+		io.to(currentGame.player1.socketId).emit('new-turn', {
+			game: updatedGame,
+		});
+		io.to(currentGame.player2.socketId).emit('new-turn', {
+			game: updatedGame,
+		});
 	});
 	socket.on('draw-card', async (data) => {
 		console.log('draw hand BY', socket.id);
@@ -859,6 +851,7 @@ const getPlayerNumber = (socketId, game) => {
  *
  * @param {Number} playerNumber The player number, valid values are 1 or 2
  * @param {Object} game The current game object
+ * @returns {Object} returns the ally and enemy object
  */
 const getAllyAndEnemy = (playerNumber, game) => {
 	let ally,
@@ -879,6 +872,7 @@ const getAllyAndEnemy = (playerNumber, game) => {
  * @dev Calculates the damage multiplier based on Card Type
  * @param { String } attackerType
  * @param { String } victimType
+ * @returns { Number } damageMultiplier - based on card types
  */
 const getCardDamageMultiplier = (attackerType, victimType) => {
 	// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
@@ -941,6 +935,15 @@ const getCardDamageMultiplier = (attackerType, victimType) => {
 			break;
 	}
 	return damageMultiplier;
+};
+
+/**
+ * @dev Swaps the player turn, if the previous turn was Player1's turn then we swap it to Player2
+ * @param {Number} currentPlayerTurn
+ * @returns {Number} newPlayerTurn
+ */
+const swapPlayerTurn = (currentPlayerTurn) => {
+	return currentPlayerTurn === 1 ? 2 : 1;
 };
 
 // Returns false if one or more are innactive

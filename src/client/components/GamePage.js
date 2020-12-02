@@ -185,7 +185,7 @@ export default () => {
 	}, []);
 
 	/**
-	 * @dev On render and start-turn a timer will countdown how long left the player has to make a move
+	 * @dev On render and new-turn a timer will countdown how long left the player has to make a move
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
@@ -416,23 +416,33 @@ export default () => {
 				});
 			}
 		});
-		state.socket.on('start-turn', (data) => {
-			const payload = {
-				isOtherPlayerTurn: false,
-			};
-			if (data.game) {
+		state.socket.on('new-turn', (data) => {
+			const game = data.game;
+
+			if (state.playerNumber === game.currentPlayerTurn) {
 				dispatch({
-					type: 'SET_GAME',
+					type: 'SET_IS_OTHER_PLAYER_TURN',
 					payload: {
-						game: data.game,
+						isOtherPlayerTurn: false,
+					},
+				});
+				drawCard();
+			} else {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: true,
 					},
 				});
 			}
+
 			dispatch({
-				type: 'SET_IS_OTHER_PLAYER_TURN',
-				payload,
+				type: 'SET_GAME',
+				payload: {
+					game,
+				},
 			});
-			drawCard();
+
 			// Restarts the countdown timer
 			setTurnCountdownTimer(SECONDS_PER_TURN);
 		});
@@ -563,69 +573,6 @@ export default () => {
 				attackingCardId: cardId,
 			},
 		});
-	};
-
-	const getDamageMultiplier = (attackerType, victimType) => {
-		// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
-		let damageMultiplier = 1;
-		switch (attackerType) {
-			case 'fire':
-				if (victimType == 'wind') damageMultiplier = 2;
-				else if (
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'wind':
-				if (victimType == 'water') damageMultiplier = 2;
-				else if (
-					victimType == 'fire' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'water':
-				if (victimType == 'fire') damageMultiplier = 2;
-				else if (
-					victimType == 'wind' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'life':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'death':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'neutral':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-		}
-		return damageMultiplier;
 	};
 
 	/**

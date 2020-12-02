@@ -8,6 +8,7 @@ const MIN_CARD_LIFE = GAME_CONFIG.minCardLife;
 const MAX_CARD_LIFE = GAME_CONFIG.maxCardLife;
 const MAX_CARD_ATTACK = GAME_CONFIG.maxCardAttack;
 const MIN_CARD_ATTACK = GAME_CONFIG.minCardAttack;
+const SECONDS_PER_TURN = GAME_CONFIG.secondsPerTurn;
 const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral'];
 
 // The individual Card component
@@ -79,80 +80,88 @@ const Board = (props) => {
 					? 'You lost! Better luck next time!'
 					: 'Game On'}
 			</h1>
+			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
+			<p>Timer: {props.turnCountdownTimer}</p>
 			<Link
 				className={state.gameOver ? 'margin-bot button-like' : 'hidden'}
 				to="/"
 			>
 				Exit
 			</Link>
-			<div className="game">
-				<div
-					className={
-						state.isAttackMode
-							? 'enemy-stats attack-mode'
-							: 'enemy-stats'
-					}
-					onClick={() => {
-						if (state.isAttackMode) props.attackDirectly();
-					}}
-				>
-					<p>Enemy</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player2.life
-							: state.game.player1.life}
-						&nbsp;HP
-					</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player2.energy
-							: state.game.player1.energy}
-						&nbsp;Energy
-					</p>
-				</div>
-				<div className="my-stats">
-					<p>You</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player1.life
-							: state.game.player2.life}
-						&nbsp;HP
-					</p>
-					<p>
-						{state.playerNumber === 1
-							? state.game.player1.energy
-							: state.game.player2.energy}
-						&nbsp;Energy
-					</p>
-				</div>
-				<div className="cards-container enemy-cards-container">
-					{state.visualEnemyHand}
-				</div>
-				<div className="field">
+			{state.game ? (
+				<div className="game">
 					<div
 						className={
 							state.isAttackMode
-								? 'enemy-field attack-mode'
-								: 'enemy-field'
+								? 'enemy-stats attack-mode'
+								: 'enemy-stats'
 						}
+						onClick={() => {
+							if (state.isAttackMode) props.attackDirectly();
+						}}
 					>
-						{state.enemyFieldHtml}
+						<p>Enemy</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player2.life
+								: state.game.player1.life}
+							&nbsp;HP
+						</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player2.energy
+								: state.game.player1.energy}
+							&nbsp;Energy
+						</p>
 					</div>
-					<div className="friendly-field">{state.allyFieldHtml}</div>
+					<div className="my-stats">
+						<p>You</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player1.life
+								: state.game.player2.life}
+							&nbsp;HP
+						</p>
+						<p>
+							{state.playerNumber === 1
+								? state.game.player1.energy
+								: state.game.player2.energy}
+							&nbsp;Energy
+						</p>
+					</div>
+					<div className="cards-container enemy-cards-container">
+						{state.visualEnemyHand}
+					</div>
+					<div className="field">
+						<div
+							className={
+								state.isAttackMode
+									? 'enemy-field attack-mode'
+									: 'enemy-field'
+							}
+						>
+							{state.enemyFieldHtml}
+						</div>
+						<div className="friendly-field">
+							{state.allyFieldHtml}
+						</div>
+					</div>
+					<div className="cards-container ally-cards-container">
+						{state.visualAllyHand}
+					</div>
+					<button
+						className="end-turn"
+						disabled={state.isOtherPlayerTurn || isGamePaused()}
+						onClick={() => {
+							props.endTurn();
+						}}
+					>
+						End Turn
+					</button>
 				</div>
-				<div className="cards-container ally-cards-container">
-					{state.visualAllyHand}
-				</div>
-				<button
-					className="end-turn"
-					disabled={state.isOtherPlayerTurn || isGamePaused()}
-					onClick={() => {
-						props.endTurn();
-					}}
-				>
-					End Turn
-				</button>
-			</div>
+			) : (
+				<p>Game loading...</p>
+			)}
 		</div>
 	);
 };
@@ -160,6 +169,9 @@ const Board = (props) => {
 export default () => {
 	const { state, dispatch } = useContext(store);
 	const [gameOver, setGameOver] = useState(null);
+	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
+		SECONDS_PER_TURN,
+	);
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -173,7 +185,27 @@ export default () => {
 		setListeners();
 	}, []);
 
+	/**
+	 * @dev On render and new-turn a timer will countdown how long left the player has to make a move
+	 */
 	useEffect(() => {
+		const countdownTimer = setTimeout(() => {
+			console.log('setTimeout running', turnCountdownTimer);
+			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
+				endTurn();
+				setTurnCountdownTimer(SECONDS_PER_TURN);
+				return;
+			}
+			setTurnCountdownTimer(turnCountdownTimer - 1);
+		}, 1000);
+		return () => {
+			clearTimeout(countdownTimer);
+		};
+	}, [turnCountdownTimer]);
+
+	useEffect(() => {
+		if (!state.game) return;
+
 		let visualEnemyHand;
 		let visualAllyHand;
 		if (state.playerNumber === 2) {
@@ -212,6 +244,8 @@ export default () => {
 
 	// When the attack mode is activate, regenerate the field
 	useEffect(() => {
+		if (!state.game) return;
+
 		const { allyFieldHtml, enemyFieldHtml } = generateFieldCards(
 			state.playerNumber,
 			state.game.player1.field,
@@ -362,14 +396,56 @@ export default () => {
 	};
 
 	const setListeners = () => {
-		state.socket.on('start-turn', () => {
+		state.socket.on('set-state', (data) => {
+			console.log('set-state data', data);
+
+			if (data.game) {
+				dispatch({
+					type: 'SET_GAME',
+					payload: {
+						game: data.game,
+					},
+				});
+			}
+
+			if (data.isOtherPlayerTurn) {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: data.isOtherPlayerTurn,
+					},
+				});
+			}
+		});
+		state.socket.on('new-turn', (data) => {
+			const game = data.game;
+
+			if (state.playerNumber === game.currentPlayerTurn) {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: false,
+					},
+				});
+				drawCard();
+			} else {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: true,
+					},
+				});
+			}
+
 			dispatch({
-				type: 'SET_IS_OTHER_PLAYER_TURN',
+				type: 'SET_GAME',
 				payload: {
-					isOtherPlayerTurn: false,
+					game,
 				},
 			});
-			drawCard();
+
+			// Restarts the countdown timer
+			setTurnCountdownTimer(SECONDS_PER_TURN);
 		});
 		state.socket.on('draw-card-received', (data) => {
 			dispatch({
@@ -423,33 +499,34 @@ export default () => {
 	const endTurn = () => {
 		toggleAttackMode(0);
 		const game = { ...state.game };
+
 		if (state.playerNumber === 1) {
-			game.player1.turn++;
 			// Add a fake card for visual purposes
 			if (game.player2.hand.length < HAND_SIZE) {
 				game.player2.hand.push({});
 			}
 		} else {
-			game.player2.turn++;
 			// Add a fake card for visual purposes
 			if (game.player1.hand.length < HAND_SIZE) {
 				game.player1.hand.push({});
 			}
 		}
-		dispatch({
-			type: 'SET_IS_OTHER_PLAYER_TURN',
-			payload: {
-				isOtherPlayerTurn: true,
-			},
-		});
+
 		dispatch({
 			type: 'SET_GAME',
 			payload: {
 				game,
 			},
 		});
+
+		dispatch({
+			type: 'SET_IS_OTHER_PLAYER_TURN',
+			payload: {
+				isOtherPlayerTurn: true,
+			},
+		});
 		state.socket.emit('end-turn', {
-			game,
+			currentGameID: state.game.gameId,
 		});
 	};
 
@@ -501,69 +578,6 @@ export default () => {
 				attackingCardId: cardId,
 			},
 		});
-	};
-
-	const getDamageMultiplier = (attackerType, victimType) => {
-		// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
-		let damageMultiplier = 1;
-		switch (attackerType) {
-			case 'fire':
-				if (victimType == 'wind') damageMultiplier = 2;
-				else if (
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'wind':
-				if (victimType == 'water') damageMultiplier = 2;
-				else if (
-					victimType == 'fire' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'water':
-				if (victimType == 'fire') damageMultiplier = 2;
-				else if (
-					victimType == 'wind' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'life':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'death':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'neutral':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-		}
-		return damageMultiplier;
 	};
 
 	/**
@@ -665,6 +679,7 @@ export default () => {
 			<Board
 				attackDirectly={() => attackDirectly()}
 				endTurn={() => endTurn()}
+				turnCountdownTimer={turnCountdownTimer}
 			/>
 		</>
 	);

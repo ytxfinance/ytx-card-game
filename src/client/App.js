@@ -101,13 +101,14 @@ const App = () => {
 			});
 		});
 		state.socket.on('player-joined', (game) => {
+			console.log('player-joined', game);
+
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
 					game,
 				},
 			});
-			console.log('game', game);
 			history.push('/game');
 		});
 	};

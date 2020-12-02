@@ -51,6 +51,11 @@ app.use('*', (req, res, next) => {
 	next();
 });
 
+app.post('/github-push', (req, res) => {
+	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {});
+	res.status(200).send('Ok');
+});
+
 app.get('/build.js', (req, res) => {
 	return res.sendFile(path.join(__dirname, '../../dist/build.js'));
 });
@@ -168,6 +173,10 @@ io.on('connection', async (socket) => {
 						'player2.hand': cardsPlayer2,
 						'player2.account': data.account,
 						'player2.socketId': socket.id,
+						gameStartTimestamp: Date.now(),
+						currentTurnNumber: 1,
+						currentPlayerTurn: 1,
+						currentTurnStartTimestamp: Date.now(),
 					},
 				},
 				{
@@ -339,71 +348,100 @@ io.on('connection', async (socket) => {
 		} catch (e) {}
 	});
 	socket.on('end-turn', async (data) => {
+		console.log('end-turn', data.currentGameID);
+		const { currentGameID } = data;
+		let currentGame;
+
+		// Check if the game exists
+		try {
+			currentGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			});
+		} catch (e) {
+			return socket.emit(
+				'user-error',
+				'#28 Game not found from the given game ID',
+			);
+		}
 		// Check if users are still active
 		const stillActive = checkActiveSockets(
-			data.game.player1.socketId,
-			data.game.player2.socketId,
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
 		);
 		if (!stillActive) return;
-		const playerNumber = getPlayerNumber(socket.id, data.game);
+
+		const playerNumber = getPlayerNumber(socket.id, currentGame);
 		let updatedCanAttackField;
 		let set = {
-			'player1.turn': data.game.player1.turn,
-			'player1.field': data.game.player1.field,
-			'player2.turn': data.game.player2.turn,
-			'player2.field': data.game.player2.field,
+			'player1.turn': currentGame.player1.turn,
+			'player1.field': currentGame.player1.field,
+			'player1.hand': currentGame.player1.hand,
+			'player2.turn': currentGame.player2.turn,
+			'player2.field': currentGame.player2.field,
+			'player2.hand': currentGame.player2.hand,
+			currentTurnNumber: currentGame.currentTurnNumber + 1,
+			currentPlayerTurn: swapPlayerTurn(currentGame.currentPlayerTurn),
+			currentTurnStartTimestamp: Date.now(),
 		};
+
 		if (playerNumber === 0) {
 			return socket.emit(
 				'user-error',
 				'#21 You are not a player of this particular game',
 			);
 		} else if (playerNumber === 1) {
-			updatedCanAttackField = data.game.player2.field.map((card) => {
+			updatedCanAttackField = currentGame.player2.field.map((card) => {
 				card.canAttack = true;
 				return card;
 			});
-			set = {
-				'player2.turn': data.game.player2.turn,
-				'player2.field': updatedCanAttackField,
-				'player2.energy':
-					data.game.player2.energy + GAME_CONFIG.energyPerTurn,
-			};
+			set['player2.field'] = updatedCanAttackField;
+			set['player2.energy'] =
+				currentGame.player2.energy + GAME_CONFIG.energyPerTurn;
+			set['player2.turn'] += 1;
+			//TODO: Add a fake card for visual purposes
+			// set['player2.hand'].push({});
 		} else {
-			updatedCanAttackField = data.game.player1.field.map((card) => {
+			updatedCanAttackField = currentGame.player1.field.map((card) => {
 				card.canAttack = true;
 				return card;
 			});
-			set = {
-				'player1.turn': data.game.player1.turn,
-				'player1.field': updatedCanAttackField,
-				'player1.energy':
-					data.game.player1.energy + GAME_CONFIG.energyPerTurn,
-			};
+			set['player1.field'] = updatedCanAttackField;
+			set['player1.energy'] =
+				currentGame.player1.energy + GAME_CONFIG.energyPerTurn;
+			set['player1.turn'] += 1;
+			//TODO: Add a fake card for visual purposes
+			// set['player1.hand'].push({});
 		}
 		// Update other player's field cards to set canAttack to true
 		// Send start turn to the other player with the updated game
+		let updatedGame;
 		try {
 			await db.collection('games').findOneAndUpdate(
 				{
-					gameId: data.game.gameId,
+					gameId: currentGame.gameId,
 				},
 				{
 					$set: set,
 				},
 			);
+			updatedGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			});
 		} catch (e) {
 			return socket.emit(
 				'user-error',
 				'#25 Error ending turn, try again',
 			);
 		}
-		// Send the start turn
-		if (playerNumber === 1) {
-			io.to(data.game.player2.socketId).emit('start-turn');
-		} else {
-			io.to(data.game.player1.socketId).emit('start-turn');
-		}
+
+		console.log('updatedGame', updatedGame);
+		// Notify client of the start of new turn
+		io.to(currentGame.player1.socketId).emit('new-turn', {
+			game: updatedGame,
+		});
+		io.to(currentGame.player2.socketId).emit('new-turn', {
+			game: updatedGame,
+		});
 	});
 	socket.on('draw-card', async (data) => {
 		console.log('draw hand BY', socket.id);
@@ -817,6 +855,7 @@ const getPlayerNumber = (socketId, game) => {
  *
  * @param {Number} playerNumber The player number, valid values are 1 or 2
  * @param {Object} game The current game object
+ * @returns {Object} returns the ally and enemy object
  */
 const getAllyAndEnemy = (playerNumber, game) => {
 	let ally,
@@ -837,6 +876,7 @@ const getAllyAndEnemy = (playerNumber, game) => {
  * @dev Calculates the damage multiplier based on Card Type
  * @param { String } attackerType
  * @param { String } victimType
+ * @returns { Number } damageMultiplier - based on card types
  */
 const getCardDamageMultiplier = (attackerType, victimType) => {
 	// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
@@ -899,6 +939,15 @@ const getCardDamageMultiplier = (attackerType, victimType) => {
 			break;
 	}
 	return damageMultiplier;
+};
+
+/**
+ * @dev Swaps the player turn, if the previous turn was Player1's turn then we swap it to Player2
+ * @param {Number} currentPlayerTurn
+ * @returns {Number} newPlayerTurn
+ */
+const swapPlayerTurn = (currentPlayerTurn) => {
+	return currentPlayerTurn === 1 ? 2 : 1;
 };
 
 // Returns false if one or more are innactive

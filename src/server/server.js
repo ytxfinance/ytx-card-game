@@ -475,7 +475,9 @@ io.on('connection', async (socket) => {
 			);
 		} else if (playerNumber === 1) {
 			copyHand = updatedGame.player1.hand.slice(0);
-			copyHand.push(newCard);
+			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
+				copyHand.push(newCard);
+			}
 			try {
 				updatedGame = await db.collection('games').findOneAndUpdate(
 					{
@@ -502,7 +504,9 @@ io.on('connection', async (socket) => {
 			});
 		} else {
 			copyHand = updatedGame.player2.hand.slice(0);
-			copyHand.push(newCard);
+			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
+				copyHand.push(newCard);
+			}
 			try {
 				updatedGame = await db.collection('games').findOneAndUpdate(
 					{
@@ -1011,7 +1015,7 @@ const cancelGame = async (socket) => {
 				socket: socket.id,
 			})
 			.toArray();
-		if (gamesWithUserAccount > 0) {
+		if (gamesWithUserAccount) {
 			// Note that subfields, i.e. nested objects must be searched with the dot notation if the nested object has many fields and you're only interested in one
 			await db.collection('games').deleteMany({
 				status: GAME_STATUS.CREATED,

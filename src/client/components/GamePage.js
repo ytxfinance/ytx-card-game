@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import GAME_CONFIG from '../../../GAME_CONFIG.json';
 import { store } from './Store';
+const HAND_SIZE = GAME_CONFIG.maxCardsInHand;
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField;
 const MIN_CARD_LIFE = GAME_CONFIG.minCardLife;
 const MAX_CARD_LIFE = GAME_CONFIG.maxCardLife;
@@ -501,10 +502,14 @@ export default () => {
 
 		if (state.playerNumber === 1) {
 			// Add a fake card for visual purposes
-			game.player2.hand.push({});
+			if (game.player2.hand.length < HAND_SIZE) {
+				game.player2.hand.push({});
+			}
 		} else {
 			// Add a fake card for visual purposes
-			game.player1.hand.push({});
+			if (game.player1.hand.length < HAND_SIZE) {
+				game.player1.hand.push({});
+			}
 		}
 
 		dispatch({

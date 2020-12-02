@@ -1015,7 +1015,7 @@ const cancelGame = async (socket) => {
 				socket: socket.id,
 			})
 			.toArray();
-		if (gamesWithUserAccount > 0) {
+		if (gamesWithUserAccount) {
 			// Note that subfields, i.e. nested objects must be searched with the dot notation if the nested object has many fields and you're only interested in one
 			await db.collection('games').deleteMany({
 				status: GAME_STATUS.CREATED,

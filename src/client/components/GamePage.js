@@ -171,6 +171,7 @@ export default () => {
 	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
 		SECONDS_PER_TURN,
 	);
+	const isGamePaused = () => state.game && state.game.gamePaused;
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -189,6 +190,9 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
+      console.log('isGamePaused()', isGamePaused())
+			if (isGamePaused()) return;
+
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
 			);

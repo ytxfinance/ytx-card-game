@@ -74,7 +74,6 @@ const App = () => {
 				},
 			});
 			history.push('/');
-			showSuccessMessage();
 		});
 		state.socket.on('game-created', () => {
 			dispatch({

@@ -1,4 +1,4 @@
-import React, { createContext, useReducer } from 'react';
+import React, { createContext, useReducer } from 'react'
 
 const initialState = {
 	account: null,
@@ -21,153 +21,153 @@ const initialState = {
 	gameOver: false,
 	enemyFieldHtml: null,
 	allyFieldHtml: null,
-};
-const store = createContext(initialState);
-const { Provider } = store;
+}
+const store = createContext(initialState)
+const { Provider } = store
 
 const StateProvider = ({ children }) => {
 	const [state, dispatch] = useReducer((state, action) => {
-		let newState;
+		let newState
 		switch (action.type) {
 			case 'SET_FIELDS':
-				console.log('set fields');
+				console.log('set fields')
 				newState = {
 					...state,
 					enemyFieldHtml: action.payload.enemyFieldHtml,
 					allyFieldHtml: action.payload.allyFieldHtml,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_ALLY_HAND':
-				console.log('set ally hand');
+				console.log('set ally hand')
 				newState = {
 					...state,
 					visualAllyHand: action.payload.visualAllyHand,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_IS_OTHER_PLAYER_TURN':
-				console.log('set is other player turn');
+				console.log('set is other player turn')
 
 				newState = {
 					...state,
 					isOtherPlayerTurn: action.payload.isOtherPlayerTurn,
-				};
-				if (action.payload.game) {
-					newState.game = action.payload.game;
 				}
-				return newState;
+				if (action.payload.game) {
+					newState.game = action.payload.game
+				}
+				return newState
 			case 'SET_GAME_OVER':
-				console.log('set game over');
+				console.log('set game over')
 				newState = {
 					...state,
 					gameOver: action.payload.gameOver,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_ATTACK_MODE':
-				console.log('set attack mode');
+				console.log('set attack mode')
 				newState = {
 					...state,
 					isAttackMode: action.payload.isAttackMode,
 					attackingCardId: action.payload.attackingCardId,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_HAND_CARDS':
-				console.log('set hand cards');
+				console.log('set hand cards')
 				newState = {
 					...state,
 					visualEnemyHand: action.payload.visualEnemyHand,
 					visualAllyHand: action.payload.visualAllyHand,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_PLAYER_NUMBER':
-				console.log('set player number');
+				console.log('set player number')
 				newState = {
 					...state,
 					playerNumber: action.payload.playerNumber,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_GAME':
-				console.log('set game', action.payload.game);
+				console.log('set game', action.payload.game)
 
 				newState = {
 					...state,
 					game: action.payload.game,
-				};
+				}
 				if (action.payload.isOtherPlayerTurn) {
 					newState.isOtherPlayerTurn =
-						action.payload.isOtherPlayerTurn;
+						action.payload.isOtherPlayerTurn
 				}
-				return newState;
+				return newState
 			case 'SET_GAME_LIST':
-				console.log('set game list');
+				console.log('set game list')
 				newState = {
 					...state,
 					gameList: action.payload.gameList,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_YTX_BET':
-				console.log('set bet');
+				console.log('set bet')
 				newState = {
 					...state,
 					ytxBet: action.payload.ytxBet,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_SUCCESS':
-				console.log('set success');
+				console.log('set success')
 				newState = {
 					...state,
 					success: action.payload.success,
 					showSuccess: true,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_SHOW_ERROR':
-				console.log('set show error');
+				console.log('set show error')
 				newState = {
 					...state,
 					showError: action.payload.showError,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_SHOW_SUCCESS':
-				console.log('set show success');
+				console.log('set show success')
 				newState = {
 					...state,
 					showSuccess: action.payload.showSuccess,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_ERROR':
-				console.log('set error', `"${action.payload.error}"`);
+				console.log('set error', `"${action.payload.error}"`)
 				newState = {
 					...state,
 					error: action.payload.error,
 					showError: true,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_SOCKET':
-				console.log('set socket');
+				console.log('set socket')
 				newState = {
 					...state,
 					socket: action.payload.socket,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_SETUP_COMPLETE':
-				console.log('set setup complete');
+				console.log('set setup complete')
 				newState = {
 					...state,
 					setupComplete: action.payload.setupComplete,
-				};
-				return newState;
+				}
+				return newState
 			case 'SET_ACCOUNT':
-				console.log('set account');
+				console.log('set account')
 				newState = {
 					...state,
 					account: action.payload.account,
-				};
-				return newState;
+				}
+				return newState
 			default:
-				console.log('default state');
-				return state;
+				console.log('default state')
+				return state
 		}
-	}, initialState);
-	return <Provider value={{ state, dispatch }}>{children}</Provider>;
-};
+	}, initialState)
+	return <Provider value={{ state, dispatch }}>{children}</Provider>
+}
 
-export { store, StateProvider };
+export { store, StateProvider }

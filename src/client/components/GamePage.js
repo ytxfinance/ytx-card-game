@@ -185,7 +185,7 @@ export default () => {
 	}, []);
 
 	/**
-	 * @dev On render and start-turn a timer will countdown how long left the player has to make a move
+	 * @dev On render and new-turn a timer will countdown how long left the player has to make a move
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
@@ -416,23 +416,33 @@ export default () => {
 				});
 			}
 		});
-		state.socket.on('start-turn', (data) => {
-			const payload = {
-				isOtherPlayerTurn: false,
-			};
-			if (data.game) {
+		state.socket.on('new-turn', (data) => {
+			const game = data.game;
+
+			if (state.playerNumber === game.currentPlayerTurn) {
 				dispatch({
-					type: 'SET_GAME',
+					type: 'SET_IS_OTHER_PLAYER_TURN',
 					payload: {
-						game: data.game,
+						isOtherPlayerTurn: false,
+					},
+				});
+				drawCard();
+			} else {
+				dispatch({
+					type: 'SET_IS_OTHER_PLAYER_TURN',
+					payload: {
+						isOtherPlayerTurn: true,
 					},
 				});
 			}
+
 			dispatch({
-				type: 'SET_IS_OTHER_PLAYER_TURN',
-				payload,
+				type: 'SET_GAME',
+				payload: {
+					game,
+				},
 			});
-			drawCard();
+
 			// Restarts the countdown timer
 			setTurnCountdownTimer(SECONDS_PER_TURN);
 		});

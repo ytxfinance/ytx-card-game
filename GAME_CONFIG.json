@@ -8,5 +8,6 @@
     "minCardAttack": 5,
     "maxCardAttack": 9,
     "minCardLife": 10,
-    "maxCardLife": 18
+    "maxCardLife": 18,
+    "secondsPerTurn": 120
 }

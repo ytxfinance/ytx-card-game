@@ -366,10 +366,12 @@ io.on('connection', async (socket) => {
 		const playerNumber = getPlayerNumber(socket.id, currentGame);
 		let updatedCanAttackField;
 		let set = {
-			'player1.turn': currentGame.player1.turn++,
+			'player1.turn': currentGame.player1.turn,
 			'player1.field': currentGame.player1.field,
-			'player2.turn': currentGame.player2.turn++,
+			'player1.hand': currentGame.player1.hand,
+			'player2.turn': currentGame.player2.turn,
 			'player2.field': currentGame.player2.field,
+			'player2.hand': currentGame.player2.hand,
 			currentTurnNumber: currentGame.currentTurnNumber + 1,
 		};
 
@@ -387,6 +389,9 @@ io.on('connection', async (socket) => {
 			set['player2.field'] = updatedCanAttackField;
 			set['player2.energy'] =
 				currentGame.player2.energy + GAME_CONFIG.energyPerTurn;
+			set['player2.turn'] += 1;
+			//TODO: Add a fake card for visual purposes
+			// set['player2.hand'].push({});
 		} else {
 			updatedCanAttackField = currentGame.player1.field.map((card) => {
 				card.canAttack = true;
@@ -395,6 +400,9 @@ io.on('connection', async (socket) => {
 			set['player1.field'] = updatedCanAttackField;
 			set['player1.energy'] =
 				currentGame.player1.energy + GAME_CONFIG.energyPerTurn;
+			set['player1.turn'] += 1;
+			//TODO: Add a fake card for visual purposes
+			// set['player1.hand'].push({});
 		}
 		// Update other player's field cards to set canAttack to true
 		// Send start turn to the other player with the updated game

@@ -7,6 +7,7 @@ const MIN_CARD_LIFE = GAME_CONFIG.minCardLife;
 const MAX_CARD_LIFE = GAME_CONFIG.maxCardLife;
 const MAX_CARD_ATTACK = GAME_CONFIG.maxCardAttack;
 const MIN_CARD_ATTACK = GAME_CONFIG.minCardAttack;
+const SECONDS_PER_TURN = GAME_CONFIG.secondsPerTurn;
 const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral'];
 
 // The individual Card component
@@ -79,6 +80,7 @@ const Board = (props) => {
 					: 'Game On'}
 			</h1>
 			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
+			<p>Timer: {props.turnCountdownTimer}</p>
 			<Link
 				className={state.gameOver ? 'margin-bot button-like' : 'hidden'}
 				to="/"
@@ -166,6 +168,9 @@ const Board = (props) => {
 export default () => {
 	const { state, dispatch } = useContext(store);
 	const [gameOver, setGameOver] = useState(null);
+	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
+		SECONDS_PER_TURN,
+	);
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -178,6 +183,24 @@ export default () => {
 		}
 		setListeners();
 	}, []);
+
+	/**
+	 * @dev On render and start-turn a timer will countdown how long left the player has to make a move
+	 */
+	useEffect(() => {
+		const countdownTimer = setTimeout(() => {
+			console.log('setTimeout running', turnCountdownTimer);
+			if (turnCountdownTimer <= 0) {
+				endTurn();
+				setTurnCountdownTimer(SECONDS_PER_TURN);
+				return;
+			}
+			setTurnCountdownTimer(turnCountdownTimer - 1);
+		}, 1000);
+		return () => {
+			clearTimeout(countdownTimer);
+		};
+	}, [turnCountdownTimer]);
 
 	useEffect(() => {
 		if (!state.game) return;
@@ -410,6 +433,8 @@ export default () => {
 				payload,
 			});
 			drawCard();
+			// Restarts the countdown timer
+			setTurnCountdownTimer(SECONDS_PER_TURN);
 		});
 		state.socket.on('draw-card-received', (data) => {
 			dispatch({
@@ -461,33 +486,29 @@ export default () => {
 	};
 
 	const endTurn = () => {
-		// const game = { ...state.game };
-		// console.log('game', game);
+		const game = { ...state.game };
 
-		// game.currentTurnNumber += 1;
-		// console.log('game', game);
+		if (state.playerNumber === 1) {
+			// Add a fake card for visual purposes
+			game.player2.hand.push({});
+		} else {
+			// Add a fake card for visual purposes
+			game.player1.hand.push({});
+		}
 
-		// if (state.playerNumber === 1) {
-		// 	game.player1.turn++;
-		// 	// Add a fake card for visual purposes
-		// 	game.player2.hand.push({});
-		// } else {
-		// 	game.player2.turn++;
-		// 	// Add a fake card for visual purposes
-		// 	game.player1.hand.push({});
-		// }
-		// dispatch({
-		// 	type: 'SET_IS_OTHER_PLAYER_TURN',
-		// 	payload: {
-		// 		isOtherPlayerTurn: true,
-		// 	},
-		// });
-		// dispatch({
-		// 	type: 'SET_GAME',
-		// 	payload: {
-		// 		game,
-		// 	},
-		// });
+		dispatch({
+			type: 'SET_GAME',
+			payload: {
+				game,
+			},
+		});
+
+		dispatch({
+			type: 'SET_IS_OTHER_PLAYER_TURN',
+			payload: {
+				isOtherPlayerTurn: true,
+			},
+		});
 		state.socket.emit('end-turn', {
 			currentGameID: state.game.gameId,
 		});
@@ -704,6 +725,7 @@ export default () => {
 			<Board
 				attackDirectly={() => attackDirectly()}
 				endTurn={() => endTurn()}
+				turnCountdownTimer={turnCountdownTimer}
 			/>
 		</>
 	);

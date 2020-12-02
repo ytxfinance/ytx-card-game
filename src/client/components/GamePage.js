@@ -563,69 +563,6 @@ export default () => {
 		});
 	};
 
-	const getDamageMultiplier = (attackerType, victimType) => {
-		// this.globalCardTypes = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
-		let damageMultiplier = 1;
-		switch (attackerType) {
-			case 'fire':
-				if (victimType == 'wind') damageMultiplier = 2;
-				else if (
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'wind':
-				if (victimType == 'water') damageMultiplier = 2;
-				else if (
-					victimType == 'fire' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'water':
-				if (victimType == 'fire') damageMultiplier = 2;
-				else if (
-					victimType == 'wind' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-			case 'life':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'death':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'neutral'
-				)
-					damageMultiplier = 2;
-				break;
-			case 'neutral':
-				if (
-					victimType == 'fire' ||
-					victimType == 'wind' ||
-					victimType == 'water' ||
-					victimType == 'life' ||
-					victimType == 'death'
-				)
-					damageMultiplier = 0.5;
-				break;
-		}
-		return damageMultiplier;
-	};
-
 	/**
 	 * @dev Handles the logic for attacking the enemy field card
 	 */

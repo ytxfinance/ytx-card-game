@@ -437,7 +437,9 @@ io.on('connection', async (socket) => {
 			);
 		} else if (playerNumber === 1) {
 			copyHand = updatedGame.player1.hand.slice(0);
-			copyHand.push(newCard);
+			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
+				copyHand.push(newCard);
+			}
 			try {
 				updatedGame = await db.collection('games').findOneAndUpdate(
 					{
@@ -464,7 +466,9 @@ io.on('connection', async (socket) => {
 			});
 		} else {
 			copyHand = updatedGame.player2.hand.slice(0);
-			copyHand.push(newCard);
+			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
+				copyHand.push(newCard);
+			}
 			try {
 				updatedGame = await db.collection('games').findOneAndUpdate(
 					{

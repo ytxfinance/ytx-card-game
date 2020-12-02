@@ -190,7 +190,7 @@ export default () => {
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
 			console.log('setTimeout running', turnCountdownTimer);
-			if (turnCountdownTimer <= 0) {
+			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
 				endTurn();
 				setTurnCountdownTimer(SECONDS_PER_TURN);
 				return;

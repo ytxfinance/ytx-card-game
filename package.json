@@ -7,15 +7,12 @@
         "dev": "cross-env NODE_ENV=development nodemon src/server/server.js",
         "start": "cross-env NODE_ENV=production node src/server/server.js",
         "compile": "cross-env NODE_ENV=production webpack",
-        "watch": "cross-env NODE_ENV=development webpack -w"
+        "watch": "cross-env NODE_ENV=development webpack -w",
+        "pull": "git pull"
     },
     "keywords": [],
     "author": "",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/merlox/decentralized-card/issues"
-    },
-    "homepage": "https://github.com/merlox/decentralized-card#readme",
+    "license": "MIT",
     "dependencies": {
         "@babel/cli": "^7.12.1",
         "body-parser": "^1.19.0",

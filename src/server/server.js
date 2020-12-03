@@ -593,6 +593,80 @@ io.on('connection', async (socket) => {
 			'card-invoke-received',
 		)
 	})
+	socket.on('burn-card', async (data) => {
+		console.log('burn-card', data)
+		// burnType if we ever decide to allow players to burn cards on field and a different way to calculate energy refund
+		const { currentGameID, cardID, burnType } = data
+
+		let currentGame
+		try {
+			currentGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			})
+		} catch (e) {
+			return socket.emit(
+				'user-error',
+				'#28 Game not found from the given game ID',
+			)
+		}
+
+		// Check if users are still active
+		const stillActive = checkActiveSockets(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+		)
+		if (!stillActive) return
+
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		const player = currentGame[`player${playerNumber}`]
+
+		let card, cardIndex
+
+		for (const [index, cardInHand] of player.hand.entries()) {
+			if (cardInHand.id !== cardID) continue
+
+			card = cardInHand
+			cardIndex = index
+			break
+		}
+
+		if (!card) {
+			return socket.emit('user-error', '#52 Card not found')
+		}
+
+    player.hand.splice(cardIndex, 1)
+		player.energy += card.cost * GAME_CONFIG.energyRefundRate
+
+		let final
+		try {
+			final = await db.collection('games').findOneAndUpdate(
+				{
+					gameId: currentGameID,
+				},
+				{
+					$set: {
+						[`player${playerNumber}`]: player,
+					},
+				},
+				{
+					returnOriginal: false,
+				},
+			)
+		} catch (e) {
+			return socket.emit(
+				'user-error',
+				'#29 Error updating the field with the invoked card',
+			)
+		}
+
+		securelyUpdateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			final.value,
+			io,
+			'card-burned',
+		)
+	})
 	socket.on('attacked-field', async (data) => {
 		console.log('attack field BY', socket.id)
 
@@ -832,17 +906,17 @@ io.on('connection', async (socket) => {
 		)
 		if (!stillActive) return
 
-    // The player number of who initiated this event
-    const playerNumber = getPlayerNumber(socket.id, currentGame)
-    // The win will be given to the other player by swapping the player number
-    const winner = swapPlayerNumber(playerNumber)
+		// The player number of who initiated this event
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		// The win will be given to the other player by swapping the player number
+		const winner = swapPlayerNumber(playerNumber)
 
-    set = {
-      status: GAME_STATUS.ENDED,
-      gamePaused: true,
-    }
+		set = {
+			status: GAME_STATUS.ENDED,
+			gamePaused: true,
+		}
 
-    try {
+		try {
 			final = await db.collection('games').findOneAndUpdate(
 				{
 					gameId: currentGame.gameId,
@@ -856,9 +930,9 @@ io.on('connection', async (socket) => {
 			)
 		} catch (e) {
 			return socket.emit('user-error', '#31 Error updating the game data')
-    }
-    
-    endGame(io, final.value, winner)
+		}
+
+		endGame(io, final.value, winner)
 	})
 })
 

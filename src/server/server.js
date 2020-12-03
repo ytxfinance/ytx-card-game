@@ -161,8 +161,8 @@ io.on('connection', async (socket) => {
 		let game
 		// Find the game and update it
 		try {
-			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards();
-			const currentTimestamp = Date.now();
+			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards()
+			const currentTimestamp = Date.now()
 			game = await db.collection('games').findOneAndUpdate(
 				{
 					gameId: data.gameId,
@@ -197,8 +197,14 @@ io.on('connection', async (socket) => {
 				'#8 Error updating the game with the second player',
 			)
 		}
-		io.to(game.value.player1.socketId).emit('player-joined', game.value)
-		io.to(game.value.player2.socketId).emit('player-joined', game.value)
+
+		updateBothClientsGameData(
+			game.value.player1.socketId,
+			game.value.player2.socketId,
+			game.value,
+			io,
+			'player-joined',
+		)
 	})
 	socket.on('invoke-card', async (data) => {
 		// Check if users are still active
@@ -374,9 +380,9 @@ io.on('connection', async (socket) => {
 		)
 		if (!stillActive) return
 
-		const playerNumber = getPlayerNumber(socket.id, currentGame);
-		let updatedCanAttackField;
-		const currentTimestamp = Date.now();
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		let updatedCanAttackField
+		const currentTimestamp = Date.now()
 		let set = {
 			'player1.turn': currentGame.player1.turn,
 			'player1.field': currentGame.player1.field,
@@ -389,7 +395,7 @@ io.on('connection', async (socket) => {
 			currentTurnStartTimestamp: currentTimestamp,
 			currentTurnTimeLimitTimestamp:
 				currentTimestamp + GAME_CONFIG.secondsPerTurn * 1000,
-		};
+		}
 
 		if (playerNumber === 0) {
 			return socket.emit(
@@ -439,13 +445,14 @@ io.on('connection', async (socket) => {
 		}
 
 		console.log('updatedGame', updatedGame)
+
 		// Notify client of the start of new turn
-		io.to(currentGame.player1.socketId).emit('new-turn', {
-			game: updatedGame,
-		})
-		io.to(currentGame.player2.socketId).emit('new-turn', {
-			game: updatedGame,
-		})
+		updateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			updatedGame,
+			io,
+		)
 	})
 	socket.on('draw-card', async (data) => {
 		console.log('draw hand BY', socket.id)
@@ -1102,6 +1109,43 @@ const start = async () => {
 	}
 	http.listen(port, '0.0.0.0')
 	console.log(`Listening on localhost:${port}`)
+}
+
+/**
+ * @dev Handles the update of both players of new game data
+ * @param {String} player1SocketID
+ * @param {String} player2SocketID
+ * @param {Object} game
+ * @param {String} eventName
+ * @param {Object} io
+ * @returns void
+ */
+const updateBothClientsGameData = (
+	player1SocketID,
+	player2SocketID,
+	game,
+	io,
+	eventName = 'new-turn',
+) => {
+	// Deep cloning to ensure nested arrays/objects will not be manipulated further below
+	const deepClone = require('lodash.clonedeep')
+	const player1GameObject = deepClone(game)
+	const player2GameObject = deepClone(game)
+
+	// Ensures that a player will not be able to view their enemy on-hand card stats by looking at the network tab
+	player1GameObject.player2.hand = player1GameObject.player2.hand.map(
+		() => ({}),
+	)
+	player2GameObject.player1.hand = player2GameObject.player1.hand.map(
+		() => ({}),
+	)
+
+	console.log('player1GameObject', player1GameObject)
+	console.log('player2GameObject', player2GameObject)
+
+	// Updating clients
+	io.to(player1SocketID).emit(eventName, player1GameObject)
+	io.to(player2SocketID).emit(eventName, player2GameObject)
 }
 
 start()

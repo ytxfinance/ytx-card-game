@@ -365,7 +365,14 @@ export default () => {
 		// Populate ally field with ally invoked cards or empty placeholders
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
-				<div className="field-item" key={i + Math.random()}>
+				<div
+					className={
+						allySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
+					key={i + Math.random()}
+				>
 					{allySortedField[i] ? (
 						<Card
 							{...allySortedField[i]}
@@ -386,10 +393,14 @@ export default () => {
 			)
 			enemyFieldHtml.push(
 				<div
-					className="field-item"
+					className={
+						enemySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
 					key={i + Math.random()}
 					onClick={(e) => {
-						if (state.isAttackMode) attackField(e.currentTarget)
+						if (state.isAttackMode & enemySortedField[i]) attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -642,7 +653,7 @@ export default () => {
 		console.log('Attack Field executed')
 		const currentGame = state.game
 		toggleAttackMode(0)
-		if(target.firstChild) {
+		if (target.firstChild) {
 			if (!currentGame) {
 				return dispatch({
 					type: 'SET_ERROR',
@@ -664,7 +675,7 @@ export default () => {
 				currentGameID: currentGame.gameId,
 				attackingCardID: state.attackingCardId,
 				enemyCardID: target.firstChild.dataset.id,
-			})			
+			})
 		}
 	}
 

@@ -539,34 +539,36 @@ export default () => {
 
 	const invokeCard = (card) => {
 		console.log('invoke card', card)
-		let me
-		if (state.playerNumber === 1) {
-			me = state.game.player1
-		} else {
-			me = state.game.player2
+		if(!card.isInvoked) {
+			let me
+			if (state.playerNumber === 1) {
+				me = state.game.player1
+			} else {
+				me = state.game.player2
+			}
+			// Invokes a card into the field and updates ally hand with a new deep copy
+			if (me.field.length >= FIELD_SIZE) {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: 'The field is full',
+					},
+				})
+			}
+			if (card.cost > me.energy) {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: "You don't have enough energy to invoke this card",
+					},
+				})
+			}
+			card.isInvoked = true
+			state.socket.emit('invoke-card', {
+				game: state.game,
+				card,
+			})			
 		}
-		// Invokes a card into the field and updates ally hand with a new deep copy
-		if (me.field.length >= FIELD_SIZE) {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: 'The field is full',
-				},
-			})
-		}
-		if (card.cost > me.energy) {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: "You don't have enough energy to invoke this card",
-				},
-			})
-		}
-		card.isInvoked = true
-		state.socket.emit('invoke-card', {
-			game: state.game,
-			card,
-		})
 	}
 
 	const toggleAttackMode = (cardId) => {

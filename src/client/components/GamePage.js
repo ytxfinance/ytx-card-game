@@ -149,15 +149,30 @@ const Board = (props) => {
 					<div className="cards-container ally-cards-container">
 						{state.visualAllyHand}
 					</div>
-					<button
-						className="end-turn"
-						disabled={state.isOtherPlayerTurn || isGamePaused()}
-						onClick={() => {
-							props.endTurn()
-						}}
-					>
-						End Turn
-					</button>
+					<div class="actions-container">
+						<button
+							className="end-turn"
+							disabled={state.isOtherPlayerTurn || isGamePaused()}
+							onClick={() => {
+								props.endTurn()
+							}}
+						>
+							End Turn
+						</button>
+						<button
+							className="end-turn"
+							style={{
+								backgroundColor: 'red',
+								marginTop: '10px',
+							}}
+							disabled={isGamePaused()}
+							onClick={() => {
+								props.surrender()
+							}}
+						>
+							Surrender
+						</button>
+					</div>
 				</div>
 			) : (
 				<p>Game loading...</p>
@@ -523,6 +538,14 @@ export default () => {
 		})
 	}
 
+	const surrender = () => {
+		toggleAttackMode(0)
+
+		state.socket.emit('surrender', {
+			currentGameID: state.game.gameId,
+		})
+	}
+
 	const drawCard = () => {
 		// We just check the socket id to determine which user is drawing
 		state.socket.emit('draw-card', {
@@ -674,6 +697,7 @@ export default () => {
 			<Board
 				attackDirectly={() => attackDirectly()}
 				endTurn={() => endTurn()}
+				surrender={() => surrender()}
 				turnCountdownTimer={turnCountdownTimer}
 			/>
 		</>

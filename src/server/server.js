@@ -348,7 +348,7 @@ io.on('connection', async (socket) => {
 			'player2.field': currentGame.player2.field,
 			'player2.hand': currentGame.player2.hand,
 			currentTurnNumber: currentGame.currentTurnNumber + 1,
-			currentPlayerTurn: swapPlayerTurn(currentGame.currentPlayerTurn),
+			currentPlayerTurn: swapPlayerNumber(currentGame.currentPlayerTurn), //Swaps player turn
 			currentTurnStartTimestamp: currentTimestamp,
 			currentTurnTimeLimitTimestamp:
 				currentTimestamp + GAME_CONFIG.secondsPerTurn * 1000,
@@ -809,6 +809,57 @@ io.on('connection', async (socket) => {
 			'attack-direct-received',
 		)
 	})
+	socket.on('surrender', async (data) => {
+		console.log('surrender BY', socket.id)
+		const { currentGameID } = data
+		let currentGame
+		// Check if the game exists
+		try {
+			currentGame = await db.collection('games').findOne({
+				gameId: currentGameID,
+			})
+		} catch (e) {
+			return socket.emit(
+				'user-error',
+				'#28 Game not found from the given game ID',
+			)
+		}
+
+		// Check if users are still active
+		const stillActive = checkActiveSockets(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+		)
+		if (!stillActive) return
+
+		// The player number of who initiated this event
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		// The win will be given to the other player by swapping the player number
+		const winner = swapPlayerNumber(playerNumber)
+
+		set = {
+			status: GAME_STATUS.ENDED,
+			gamePaused: true,
+		}
+
+		try {
+			final = await db.collection('games').findOneAndUpdate(
+				{
+					gameId: currentGame.gameId,
+				},
+				{
+					$set: set,
+				},
+				{
+					returnOriginal: false,
+				},
+			)
+		} catch (e) {
+			return socket.emit('user-error', '#31 Error updating the game data')
+		}
+
+		endGame(io, final.value, winner)
+	})
 })
 
 // Returns 0 if it's not any of them
@@ -914,12 +965,12 @@ const getCardDamageMultiplier = (attackerType, victimType) => {
 }
 
 /**
- * @dev Swaps the player turn, if the previous turn was Player1's turn then we swap it to Player2
- * @param {Number} currentPlayerTurn
+ * @dev Swaps the player number, if the given number was is 1 then we swap it to 2
+ * @param {Number} currentPlayerNumber
  * @returns {Number} newPlayerTurn
  */
-const swapPlayerTurn = (currentPlayerTurn) => {
-	return currentPlayerTurn === 1 ? 2 : 1
+const swapPlayerNumber = (currentPlayerNumber) => {
+	return currentPlayerNumber === 1 ? 2 : 1
 }
 
 // Returns false if one or more are innactive

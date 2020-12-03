@@ -26,6 +26,7 @@ body
     display: flex;
     align-items: center;
     justify-content: center;
+
 button
 .button-like
     background-color: rgb(42, 90, 162)
@@ -34,7 +35,6 @@ button
     padding: 20px
     color: white
     cursor: pointer
-    min-width: 200px
     display: inline-block
     text-decoration: none
 
@@ -48,6 +48,8 @@ button
         background-color: rgb(105, 102, 102)
         opacity: 0.7
         cursor: not-allowed
+.button-like
+    min-width: 200px
 
 input:not([type='submit']), textarea
     padding: 20px
@@ -196,12 +198,12 @@ input[type='submit']
             &:hover
                 opacity: 0.7
 
-    .end-turn
+    .actions-container
         position: absolute
-        top: calc(50% - 25px)
         right: 8px
         min-width: 120px
-        box-shadow: 0 0 10px 0px #afafaf
+        display: flex;
+        flex-direction: column;
 
     .cards-container
         display: flex

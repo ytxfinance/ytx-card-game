@@ -634,7 +634,7 @@ io.on('connection', async (socket) => {
 			return socket.emit('user-error', '#52 Card not found')
 		}
 
-    player.hand.splice(cardIndex, 1)
+		player.hand.splice(cardIndex, 1)
 		player.energy += card.cost * GAME_CONFIG.energyRefundRate
 
 		let final

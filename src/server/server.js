@@ -161,8 +161,8 @@ io.on('connection', async (socket) => {
 		let game
 		// Find the game and update it
 		try {
-			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards();
-			const currentTimestamp = Date.now();
+			const { cardsPlayer1, cardsPlayer2 } = generateInitialCards()
+			const currentTimestamp = Date.now()
 			game = await db.collection('games').findOneAndUpdate(
 				{
 					gameId: data.gameId,
@@ -197,52 +197,15 @@ io.on('connection', async (socket) => {
 				'#8 Error updating the game with the second player',
 			)
 		}
-		io.to(game.value.player1.socketId).emit('player-joined', game.value)
-		io.to(game.value.player2.socketId).emit('player-joined', game.value)
-	})
-	socket.on('invoke-card', async (data) => {
-		// Check if users are still active
-		const stillActive = checkActiveSockets(
-			data.game.player1.socketId,
-			data.game.player2.socketId,
+
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
+			game.value.player1.socketId,
+			game.value.player2.socketId,
+			game.value,
+			io,
+			'player-joined',
 		)
-		const playerNumber = getPlayerNumber(socket.id, data.game)
-		let updateData
-		if (!stillActive) return
-		if (playerNumber === 1) {
-			updateData = {
-				'player1.field': data.game.player1.field,
-				'player1.hand': data.game.player1.hand,
-			}
-		} else if (playerNumber === 2) {
-			updateData = {
-				'player2.field': data.game.player2.field,
-				'player2.hand': data.game.player2.hand,
-			}
-		} else {
-			return socket.emit(
-				'user-error',
-				"#21 You aren't a player of this particular game",
-			)
-		}
-		try {
-			await db.collection('games').updateOne(
-				{
-					gameId: data.game.gameId,
-				},
-				{ $set: updateData },
-			)
-		} catch (e) {
-			return socket.emit(
-				'user-error',
-				'#22 Error updating the game data with the card invoke',
-			)
-		}
-		if (playerNumber === 1) {
-			io.to(data.game.player1.socketId).emit('invoke-player1', data.game)
-		} else {
-			io.to(data.game.player2.socketId).emit('invoke-player2', data.game)
-		}
 	})
 	socket.on('update-game', async (data) => {
 		// Update-game is an event that indicates a single change such as ending a turn,
@@ -374,9 +337,9 @@ io.on('connection', async (socket) => {
 		)
 		if (!stillActive) return
 
-		const playerNumber = getPlayerNumber(socket.id, currentGame);
-		let updatedCanAttackField;
-		const currentTimestamp = Date.now();
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		let updatedCanAttackField
+		const currentTimestamp = Date.now()
 		let set = {
 			'player1.turn': currentGame.player1.turn,
 			'player1.field': currentGame.player1.field,
@@ -389,7 +352,7 @@ io.on('connection', async (socket) => {
 			currentTurnStartTimestamp: currentTimestamp,
 			currentTurnTimeLimitTimestamp:
 				currentTimestamp + GAME_CONFIG.secondsPerTurn * 1000,
-		};
+		}
 
 		if (playerNumber === 0) {
 			return socket.emit(
@@ -439,13 +402,14 @@ io.on('connection', async (socket) => {
 		}
 
 		console.log('updatedGame', updatedGame)
-		// Notify client of the start of new turn
-		io.to(currentGame.player1.socketId).emit('new-turn', {
-			game: updatedGame,
-		})
-		io.to(currentGame.player2.socketId).emit('new-turn', {
-			game: updatedGame,
-		})
+
+		// Securely notify both clients of the start of new turn
+		securelyUpdateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			updatedGame,
+			io,
+		)
 	})
 	socket.on('draw-card', async (data) => {
 		console.log('draw hand BY', socket.id)
@@ -503,9 +467,6 @@ io.on('connection', async (socket) => {
 					'#26 Error updating the player hand after drawing',
 				)
 			}
-			io.to(data.game.player1.socketId).emit('draw-card-received', {
-				game: updatedGame,
-			})
 		} else {
 			copyHand = updatedGame.player2.hand.slice(0)
 			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
@@ -532,10 +493,16 @@ io.on('connection', async (socket) => {
 					'#27 Error updating the player hand after drawing',
 				)
 			}
-			io.to(data.game.player2.socketId).emit('draw-card-received', {
-				game: updatedGame,
-			})
 		}
+
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
+			data.game.player1.socketId,
+			data.game.player2.socketId,
+			updatedGame,
+			io,
+			'draw-card-received',
+		)
 	})
 	socket.on('invoke-card', async (data) => {
 		console.log('invoke card BY', socket.id)
@@ -616,12 +583,15 @@ io.on('connection', async (socket) => {
 				'#29 Error updating the field with the invoked card',
 			)
 		}
-		io.to(data.game.player1.socketId).emit('card-invoke-received', {
-			game: final.value,
-		})
-		return io.to(data.game.player2.socketId).emit('card-invoke-received', {
-			game: final.value,
-		})
+
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
+			data.game.player1.socketId,
+			data.game.player2.socketId,
+			final.value,
+			io,
+			'card-invoke-received',
+		)
 	})
 	socket.on('attacked-field', async (data) => {
 		console.log('attack field BY', socket.id)
@@ -728,12 +698,14 @@ io.on('connection', async (socket) => {
 			return socket.emit('user-error', '#31 Error updating the game data')
 		}
 
-		io.to(currentGame.player2.socketId).emit('attack-field-received', {
-			game: final.value,
-		})
-		io.to(currentGame.player1.socketId).emit('attack-field-received', {
-			game: final.value,
-		})
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			final.value,
+			io,
+			'attack-field-received',
+		)
 	})
 	socket.on('attack-direct', async (data) => {
 		console.log('attack direct BY', socket.id)
@@ -828,12 +800,14 @@ io.on('connection', async (socket) => {
 		// End the game
 		if (isGameOver) return endGame(io, final.value, winner)
 
-		io.to(currentGame.player2.socketId).emit('attack-direct-received', {
-			game: final.value,
-		})
-		io.to(currentGame.player1.socketId).emit('attack-direct-received', {
-			game: final.value,
-		})
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			final.value,
+			io,
+			'attack-direct-received',
+		)
 	})
 })
 
@@ -1102,6 +1076,40 @@ const start = async () => {
 	}
 	http.listen(port, '0.0.0.0')
 	console.log(`Listening on localhost:${port}`)
+}
+
+/**
+ * @dev Handles the update of both players of new game data
+ * @param {String} player1SocketID
+ * @param {String} player2SocketID
+ * @param {Object} game
+ * @param {String} eventName
+ * @param {Object} io
+ * @returns void
+ */
+const securelyUpdateBothClientsGameData = (
+	player1SocketID,
+	player2SocketID,
+	game,
+	io,
+	eventName = 'new-turn',
+) => {
+	// Deep cloning to ensure nested arrays/objects will not be manipulated further below
+	const deepClone = require('lodash.clonedeep')
+	const player1GameObject = deepClone(game)
+	const player2GameObject = deepClone(game)
+
+	// Ensures that a player will not be able to view their enemy on-hand card stats by looking at the network tab
+	player1GameObject.player2.hand = player1GameObject.player2.hand.map(
+		() => ({}),
+	)
+	player2GameObject.player1.hand = player2GameObject.player1.hand.map(
+		() => ({}),
+	)
+
+	// Updating clients
+	io.to(player1SocketID).emit(eventName, player1GameObject)
+	io.to(player2SocketID).emit(eventName, player2GameObject)
 }
 
 start()

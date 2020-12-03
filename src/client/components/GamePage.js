@@ -171,8 +171,8 @@ export default () => {
 	const [gameOver, setGameOver] = useState(null)
 	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
 		SECONDS_PER_TURN,
-	);
-	const isGamePaused = () => state.game && state.game.gamePaused;
+	)
+	const isGamePaused = () => state.game && state.game.gamePaused
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -195,7 +195,7 @@ export default () => {
 
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
-			);
+			)
 
 			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
 				endTurn()
@@ -204,15 +204,15 @@ export default () => {
 			}
 			const newTime = Math.ceil(
 				(turnTimeLimit.getTime() - Date.now()) / 1000,
-			);
+			)
 
 			// If for whatever reason the newTime is negative we will set it to 0
 			if (newTime < 0) {
-				setTurnCountdownTimer(0);
-				return;
+				setTurnCountdownTimer(0)
+				return
 			}
-			setTurnCountdownTimer(newTime);
-		}, 1000);
+			setTurnCountdownTimer(newTime)
+		}, 1000)
 		return () => {
 			clearTimeout(countdownTimer)
 		}
@@ -432,9 +432,7 @@ export default () => {
 				})
 			}
 		})
-		state.socket.on('new-turn', (data) => {
-			const game = data.game
-
+		state.socket.on('new-turn', (game) => {
 			if (state.playerNumber === game.currentPlayerTurn) {
 				dispatch({
 					type: 'SET_IS_OTHER_PLAYER_TURN',
@@ -462,35 +460,35 @@ export default () => {
 			// Restarts the countdown timer
 			setTurnCountdownTimer(SECONDS_PER_TURN)
 		})
-		state.socket.on('draw-card-received', (data) => {
+		state.socket.on('draw-card-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})
-		state.socket.on('card-invoke-received', (data) => {
+		state.socket.on('card-invoke-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})
-		state.socket.on('attack-field-received', (data) => {
+		state.socket.on('attack-field-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})
-		state.socket.on('attack-direct-received', (data) => {
+		state.socket.on('attack-direct-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})
@@ -513,26 +511,6 @@ export default () => {
 
 	const endTurn = () => {
 		toggleAttackMode(0)
-		const game = { ...state.game }
-
-		if (state.playerNumber === 1) {
-			// Add a fake card for visual purposes
-			if (game.player2.hand.length < HAND_SIZE) {
-				game.player2.hand.push({})
-			}
-		} else {
-			// Add a fake card for visual purposes
-			if (game.player1.hand.length < HAND_SIZE) {
-				game.player1.hand.push({})
-			}
-		}
-
-		dispatch({
-			type: 'SET_GAME',
-			payload: {
-				game,
-			},
-		})
 
 		dispatch({
 			type: 'SET_IS_OTHER_PLAYER_TURN',

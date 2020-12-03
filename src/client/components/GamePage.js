@@ -37,14 +37,27 @@ const Card = (props) => {
 		)
 	} else if (isAllyCard) {
 		buttonToDisplay = (
-			<button
-				disabled={state.isOtherPlayerTurn || isGamePaused()}
-				onClick={() => {
-					props.invokeCard()
-				}}
-			>
-				invoke
-			</button>
+			<div>
+				<button
+					disabled={state.isOtherPlayerTurn || isGamePaused()}
+					onClick={() => {
+						props.invokeCard()
+					}}
+				>
+					invoke
+				</button>
+				<button
+					style={{
+						backgroundColor: '#ffad04',
+					}}
+					disabled={state.isOtherPlayerTurn || isGamePaused()}
+					onClick={() => {
+						props.burnCardOnHand(props.cardId)
+					}}
+				>
+					Burn
+				</button>
+			</div>
 		)
 	}
 	return (
@@ -206,7 +219,7 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
-			if (isGamePaused()) return;
+			if (isGamePaused()) return
 
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
@@ -415,6 +428,9 @@ export default () => {
 							toggleAttackMode={() => {
 								toggleAttackMode(card.id)
 							}}
+							burnCardOnHand={() => {
+								burnCardOnHand(card.id)
+							}}
 						/>
 				  ))
 				: [
@@ -482,7 +498,15 @@ export default () => {
 					game,
 				},
 			})
-		})
+		}),
+			state.socket.on('card-burned', (game) => {
+				dispatch({
+					type: 'SET_GAME',
+					payload: {
+						game,
+					},
+				})
+			})
 		state.socket.on('card-invoke-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
@@ -555,7 +579,7 @@ export default () => {
 
 	const invokeCard = (card) => {
 		console.log('invoke card', card)
-		if(!card.isInvoked) {
+		if (!card.isInvoked) {
 			let me
 			if (state.playerNumber === 1) {
 				me = state.game.player1
@@ -575,7 +599,8 @@ export default () => {
 				return dispatch({
 					type: 'SET_ERROR',
 					payload: {
-						error: "You don't have enough energy to invoke this card",
+						error:
+							"You don't have enough energy to invoke this card",
 					},
 				})
 			}
@@ -583,8 +608,20 @@ export default () => {
 			state.socket.emit('invoke-card', {
 				game: state.game,
 				card,
-			})			
+			})
 		}
+	}
+
+	/**
+	 * @dev Burns the selected card on hand and refund a part of the cost as energy to the player
+	 * @param {String} cardID
+	 */
+	const burnCardOnHand = (cardID) => {
+		state.socket.emit('burn-card', {
+			currentGameID: state.game.gameId,
+			cardID,
+			burnType: 'hand',
+		})
 	}
 
 	const toggleAttackMode = (cardId) => {

@@ -171,8 +171,8 @@ export default () => {
 	const [gameOver, setGameOver] = useState(null)
 	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
 		SECONDS_PER_TURN,
-	);
-	const isGamePaused = () => state.game && state.game.gamePaused;
+	)
+	const isGamePaused = () => state.game && state.game.gamePaused
 
 	useEffect(() => {
 		if (state.playerNumber === 2) {
@@ -191,14 +191,14 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
-      console.log('isGamePaused()', isGamePaused())
-			if (isGamePaused()) return;
+			console.log('isGamePaused()', isGamePaused())
+			if (isGamePaused()) return
 
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
-			);
+			)
 
-			console.log('setTimeout running', turnCountdownTimer);
+			console.log('setTimeout running', turnCountdownTimer)
 
 			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
 				endTurn()
@@ -207,15 +207,15 @@ export default () => {
 			}
 			const newTime = Math.ceil(
 				(turnTimeLimit.getTime() - Date.now()) / 1000,
-			);
+			)
 
 			// If for whatever reason the newTime is negative we will set it to 0
 			if (newTime < 0) {
-				setTurnCountdownTimer(0);
-				return;
+				setTurnCountdownTimer(0)
+				return
 			}
-			setTurnCountdownTimer(newTime);
-		}, 1000);
+			setTurnCountdownTimer(newTime)
+		}, 1000)
 		return () => {
 			clearTimeout(countdownTimer)
 		}
@@ -435,9 +435,7 @@ export default () => {
 				})
 			}
 		})
-		state.socket.on('new-turn', (data) => {
-			const game = data.game
-
+		state.socket.on('new-turn', (game) => {
 			if (state.playerNumber === game.currentPlayerTurn) {
 				dispatch({
 					type: 'SET_IS_OTHER_PLAYER_TURN',

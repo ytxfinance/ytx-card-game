@@ -1,49 +1,49 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { store } from './Store';
+import React, { useContext, useState, useEffect } from 'react'
+import { store } from './Store'
 
 export default () => {
-	const { state, dispatch } = useContext(store);
-	const [gameName, setGameName] = useState('Game');
-	const [isWaiting, setIsWaiting] = useState(false);
+	const { state, dispatch } = useContext(store)
+	const [gameName, setGameName] = useState('Game')
+	const [isWaiting, setIsWaiting] = useState(false)
 
 	useEffect(() => {
 		// When the user leaves, cancel any existing games
 		window.addEventListener('beforeunload', () => {
-			state.socket.emit('cancel-create-game');
-		});
-	}, []);
+			state.socket.emit('cancel-create-game')
+		})
+	}, [])
 
 	const createGame = async () => {
-		setIsWaiting(false);
+		setIsWaiting(false)
 		if (state.ytxBet == 0) {
 			return dispatch({
 				type: 'SET_ERROR',
 				payload: {
 					error: 'You need to bet some YTX tokens to create the game',
 				},
-			});
+			})
 		} else {
 			dispatch({
 				type: 'SET_ERROR',
 				payload: {
 					error: '',
 				},
-			});
+			})
 		}
 		const gameData = {
 			ytxBet: state.ytxBet,
 			account: state.account,
 			gameName,
-		};
-		state.socket.emit('create-game', gameData);
-		setIsWaiting(true);
-	};
+		}
+		state.socket.emit('create-game', gameData)
+		setIsWaiting(true)
+	}
 
 	const cancelCreateGame = async () => {
 		// It detects the game created by the socket id and cancels that one
-		state.socket.emit('cancel-create-game');
-		setIsWaiting(true);
-	};
+		state.socket.emit('cancel-create-game')
+		setIsWaiting(true)
+	}
 
 	return (
 		<div className="page welcome-page">
@@ -75,7 +75,7 @@ export default () => {
 					className="margin-bot"
 					placeholder="Game name..."
 					onChange={(e) => {
-						setGameName(e.target.value);
+						setGameName(e.target.value)
 					}}
 				/>
 				<input
@@ -88,7 +88,7 @@ export default () => {
 							payload: {
 								ytxBet: e.target.value,
 							},
-						});
+						})
 					}}
 				/>
 				<button
@@ -100,5 +100,5 @@ export default () => {
 				</button>
 			</div>
 		</div>
-	);
-};
+	)
+}

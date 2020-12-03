@@ -191,14 +191,11 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
-      console.log('isGamePaused()', isGamePaused())
 			if (isGamePaused()) return;
 
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
 			);
-
-			console.log('setTimeout running', turnCountdownTimer);
 
 			if (turnCountdownTimer <= 0 && !state.isOtherPlayerTurn) {
 				endTurn()

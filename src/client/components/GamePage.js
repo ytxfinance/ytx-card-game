@@ -487,11 +487,11 @@ export default () => {
 				},
 			})
 		})
-		state.socket.on('attack-direct-received', (data) => {
+		state.socket.on('attack-direct-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})

@@ -692,9 +692,16 @@ io.on('connection', async (socket) => {
 			)
 		} catch (e) {
 			return socket.emit('user-error', '#31 Error updating the game data')
-    }
-    
-    updateBothClientsGameData(currentGame.player1.socketId, currentGame.player2.socketId, final.value, io, 'attack-field-received')
+		}
+
+		//Securely updates both clients of new game data
+		updateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			final.value,
+			io,
+			'attack-field-received',
+		)
 	})
 	socket.on('attack-direct', async (data) => {
 		console.log('attack direct BY', socket.id)
@@ -789,12 +796,14 @@ io.on('connection', async (socket) => {
 		// End the game
 		if (isGameOver) return endGame(io, final.value, winner)
 
-		io.to(currentGame.player2.socketId).emit('attack-direct-received', {
-			game: final.value,
-		})
-		io.to(currentGame.player1.socketId).emit('attack-direct-received', {
-			game: final.value,
-		})
+		//Securely updates both clients of new game data
+		updateBothClientsGameData(
+			currentGame.player1.socketId,
+			currentGame.player2.socketId,
+			final.value,
+			io,
+			'attack-direct-received',
+		)
 	})
 })
 

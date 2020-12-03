@@ -463,11 +463,11 @@ export default () => {
 			// Restarts the countdown timer
 			setTurnCountdownTimer(SECONDS_PER_TURN)
 		})
-		state.socket.on('draw-card-received', (data) => {
+		state.socket.on('draw-card-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})

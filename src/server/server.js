@@ -466,9 +466,6 @@ io.on('connection', async (socket) => {
 					'#26 Error updating the player hand after drawing',
 				)
 			}
-			io.to(data.game.player1.socketId).emit('draw-card-received', {
-				game: updatedGame,
-			})
 		} else {
 			copyHand = updatedGame.player2.hand.slice(0)
 			if (copyHand.length < GAME_CONFIG.maxCardsInHand) {
@@ -495,10 +492,16 @@ io.on('connection', async (socket) => {
 					'#27 Error updating the player hand after drawing',
 				)
 			}
-			io.to(data.game.player2.socketId).emit('draw-card-received', {
-				game: updatedGame,
-			})
 		}
+
+		//Securely updates both clients of new game data
+		updateBothClientsGameData(
+			data.game.player1.socketId,
+			data.game.player2.socketId,
+			updatedGame,
+			io,
+			'draw-card-received',
+		)
 	})
 	socket.on('invoke-card', async (data) => {
 		console.log('invoke card BY', socket.id)

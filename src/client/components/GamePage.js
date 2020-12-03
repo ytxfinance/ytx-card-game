@@ -641,31 +641,32 @@ export default () => {
 	const attackField = (target) => {
 		console.log('Attack Field executed')
 		const currentGame = state.game
+		if(target.firstChild) {
+			if (!currentGame) {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: 'Current game not found',
+					},
+				})
+			}
 
-		if (!currentGame) {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: 'Current game not found',
-				},
-			})
+			if (currentGame.status === 'ENDED') {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: 'Game is already over.',
+					},
+				})
+			}
+			// Disables the selected card from attacking again
+			toggleAttackMode(0)
+			state.socket.emit('attacked-field', {
+				currentGameID: currentGame.gameId,
+				attackingCardID: state.attackingCardId,
+				enemyCardID: target.firstChild.dataset.id,
+			})			
 		}
-
-		if (currentGame.status === 'ENDED') {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: 'Game is already over.',
-				},
-			})
-		}
-		// Disables the selected card from attacking again
-		toggleAttackMode(0)
-		state.socket.emit('attacked-field', {
-			currentGameID: currentGame.gameId,
-			attackingCardID: state.attackingCardId,
-			enemyCardID: target.firstChild.dataset.id,
-		})
 	}
 
 	/**

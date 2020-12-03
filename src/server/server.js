@@ -1107,9 +1107,6 @@ const securelyUpdateBothClientsGameData = (
 		() => ({}),
 	)
 
-	console.log('player1GameObject', player1GameObject)
-	console.log('player2GameObject', player2GameObject)
-
 	// Updating clients
 	io.to(player1SocketID).emit(eventName, player1GameObject)
 	io.to(player2SocketID).emit(eventName, player2GameObject)

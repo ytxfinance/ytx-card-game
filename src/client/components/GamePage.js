@@ -641,6 +641,7 @@ export default () => {
 	const attackField = (target) => {
 		console.log('Attack Field executed')
 		const currentGame = state.game
+		toggleAttackMode(0)
 		if(target.firstChild) {
 			if (!currentGame) {
 				return dispatch({
@@ -659,8 +660,6 @@ export default () => {
 					},
 				})
 			}
-			// Disables the selected card from attacking again
-			toggleAttackMode(0)
 			state.socket.emit('attacked-field', {
 				currentGameID: currentGame.gameId,
 				attackingCardID: state.attackingCardId,

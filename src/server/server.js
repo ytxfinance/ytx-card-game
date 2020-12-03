@@ -692,14 +692,9 @@ io.on('connection', async (socket) => {
 			)
 		} catch (e) {
 			return socket.emit('user-error', '#31 Error updating the game data')
-		}
-
-		io.to(currentGame.player2.socketId).emit('attack-field-received', {
-			game: final.value,
-		})
-		io.to(currentGame.player1.socketId).emit('attack-field-received', {
-			game: final.value,
-		})
+    }
+    
+    updateBothClientsGameData(currentGame.player1.socketId, currentGame.player2.socketId, final.value, io, 'attack-field-received')
 	})
 	socket.on('attack-direct', async (data) => {
 		console.log('attack direct BY', socket.id)

@@ -479,11 +479,11 @@ export default () => {
 				},
 			})
 		})
-		state.socket.on('attack-field-received', (data) => {
+		state.socket.on('attack-field-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})

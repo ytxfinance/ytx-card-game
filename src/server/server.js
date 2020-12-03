@@ -198,7 +198,8 @@ io.on('connection', async (socket) => {
 			)
 		}
 
-		updateBothClientsGameData(
+		//Securely updates both clients of new game data
+		securelyUpdateBothClientsGameData(
 			game.value.player1.socketId,
 			game.value.player2.socketId,
 			game.value,
@@ -402,8 +403,8 @@ io.on('connection', async (socket) => {
 
 		console.log('updatedGame', updatedGame)
 
-		// Notify client of the start of new turn
-		updateBothClientsGameData(
+		// Securely notify both clients of the start of new turn
+		securelyUpdateBothClientsGameData(
 			currentGame.player1.socketId,
 			currentGame.player2.socketId,
 			updatedGame,
@@ -495,7 +496,7 @@ io.on('connection', async (socket) => {
 		}
 
 		//Securely updates both clients of new game data
-		updateBothClientsGameData(
+		securelyUpdateBothClientsGameData(
 			data.game.player1.socketId,
 			data.game.player2.socketId,
 			updatedGame,
@@ -584,7 +585,7 @@ io.on('connection', async (socket) => {
 		}
 
 		//Securely updates both clients of new game data
-		updateBothClientsGameData(
+		securelyUpdateBothClientsGameData(
 			data.game.player1.socketId,
 			data.game.player2.socketId,
 			final.value,
@@ -698,7 +699,7 @@ io.on('connection', async (socket) => {
 		}
 
 		//Securely updates both clients of new game data
-		updateBothClientsGameData(
+		securelyUpdateBothClientsGameData(
 			currentGame.player1.socketId,
 			currentGame.player2.socketId,
 			final.value,
@@ -800,7 +801,7 @@ io.on('connection', async (socket) => {
 		if (isGameOver) return endGame(io, final.value, winner)
 
 		//Securely updates both clients of new game data
-		updateBothClientsGameData(
+		securelyUpdateBothClientsGameData(
 			currentGame.player1.socketId,
 			currentGame.player2.socketId,
 			final.value,
@@ -1086,7 +1087,7 @@ const start = async () => {
  * @param {Object} io
  * @returns void
  */
-const updateBothClientsGameData = (
+const securelyUpdateBothClientsGameData = (
 	player1SocketID,
 	player2SocketID,
 	game,

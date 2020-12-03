@@ -219,7 +219,7 @@ export default () => {
 	 */
 	useEffect(() => {
 		const countdownTimer = setTimeout(() => {
-			if (isGamePaused()) return;
+			if (isGamePaused()) return
 
 			const turnTimeLimit = new Date(
 				state.game.currentTurnTimeLimitTimestamp,
@@ -579,7 +579,7 @@ export default () => {
 
 	const invokeCard = (card) => {
 		console.log('invoke card', card)
-		if(!card.isInvoked) {
+		if (!card.isInvoked) {
 			let me
 			if (state.playerNumber === 1) {
 				me = state.game.player1
@@ -599,7 +599,8 @@ export default () => {
 				return dispatch({
 					type: 'SET_ERROR',
 					payload: {
-						error: "You don't have enough energy to invoke this card",
+						error:
+							"You don't have enough energy to invoke this card",
 					},
 				})
 			}
@@ -607,7 +608,7 @@ export default () => {
 			state.socket.emit('invoke-card', {
 				game: state.game,
 				card,
-			})			
+			})
 		}
 	}
 

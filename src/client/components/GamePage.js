@@ -162,7 +162,7 @@ const Board = (props) => {
 					<div className="cards-container ally-cards-container">
 						{state.visualAllyHand}
 					</div>
-					<div class="actions-container">
+					<div className="actions-container">
 						<button
 							className="end-turn"
 							disabled={state.isOtherPlayerTurn || isGamePaused()}

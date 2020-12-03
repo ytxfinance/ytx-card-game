@@ -514,26 +514,6 @@ export default () => {
 
 	const endTurn = () => {
 		toggleAttackMode(0)
-		const game = { ...state.game }
-
-		if (state.playerNumber === 1) {
-			// Add a fake card for visual purposes
-			if (game.player2.hand.length < HAND_SIZE) {
-				game.player2.hand.push({})
-			}
-		} else {
-			// Add a fake card for visual purposes
-			if (game.player1.hand.length < HAND_SIZE) {
-				game.player1.hand.push({})
-			}
-		}
-
-		dispatch({
-			type: 'SET_GAME',
-			payload: {
-				game,
-			},
-		})
 
 		dispatch({
 			type: 'SET_IS_OTHER_PLAYER_TURN',

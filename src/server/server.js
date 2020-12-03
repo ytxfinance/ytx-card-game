@@ -832,17 +832,17 @@ io.on('connection', async (socket) => {
 		)
 		if (!stillActive) return
 
-    // The player number of who initiated this event
-    const playerNumber = getPlayerNumber(socket.id, currentGame)
-    // The win will be given to the other player by swapping the player number
-    const winner = swapPlayerNumber(playerNumber)
+		// The player number of who initiated this event
+		const playerNumber = getPlayerNumber(socket.id, currentGame)
+		// The win will be given to the other player by swapping the player number
+		const winner = swapPlayerNumber(playerNumber)
 
-    set = {
-      status: GAME_STATUS.ENDED,
-      gamePaused: true,
-    }
+		set = {
+			status: GAME_STATUS.ENDED,
+			gamePaused: true,
+		}
 
-    try {
+		try {
 			final = await db.collection('games').findOneAndUpdate(
 				{
 					gameId: currentGame.gameId,
@@ -856,9 +856,9 @@ io.on('connection', async (socket) => {
 			)
 		} catch (e) {
 			return socket.emit('user-error', '#31 Error updating the game data')
-    }
-    
-    endGame(io, final.value, winner)
+		}
+
+		endGame(io, final.value, winner)
 	})
 })
 

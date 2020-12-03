@@ -27,8 +27,8 @@ export default () => {
 						<b>{item.gameName}</b>
 						<span>{item.ytxBet} YTX</span>
 						<button
-              type="button"
-              class="button-like"
+							type="button"
+							class="button-like"
 							onClick={() => joinGame(item.gameId)}
 						>
 							Join

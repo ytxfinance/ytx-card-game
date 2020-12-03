@@ -471,11 +471,11 @@ export default () => {
 				},
 			})
 		})
-		state.socket.on('card-invoke-received', (data) => {
+		state.socket.on('card-invoke-received', (game) => {
 			dispatch({
 				type: 'SET_GAME',
 				payload: {
-					game: data.game,
+					game,
 				},
 			})
 		})

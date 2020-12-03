@@ -579,12 +579,15 @@ io.on('connection', async (socket) => {
 				'#29 Error updating the field with the invoked card',
 			)
 		}
-		io.to(data.game.player1.socketId).emit('card-invoke-received', {
-			game: final.value,
-		})
-		return io.to(data.game.player2.socketId).emit('card-invoke-received', {
-			game: final.value,
-		})
+
+		//Securely updates both clients of new game data
+		updateBothClientsGameData(
+			data.game.player1.socketId,
+			data.game.player2.socketId,
+			final.value,
+			io,
+			'card-invoke-received',
+		)
 	})
 	socket.on('attacked-field', async (data) => {
 		console.log('attack field BY', socket.id)

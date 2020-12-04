@@ -121,7 +121,7 @@ const Board = (props) => {
 							&nbsp;Energy
 						</p>
 					</EnemyStatsBox>
-					<StatsBox className="my-stats">
+					<AllyStatsBox className="my-stats">
 						<p>You</p>
 						<p>
 							{state.playerNumber === 1
@@ -135,7 +135,7 @@ const Board = (props) => {
 								: state.game.player2.energy}
 							&nbsp;Energy
 						</p>
-					</StatsBox>
+					</AllyStatsBox>
 					<CardContainer className="cards-container enemy-cards-container">
 						{state.visualEnemyHand}
 					</CardContainer>
@@ -915,19 +915,6 @@ const Game = styled.div`
     align-items: center;
     margin: 0 auto;
 
-    .my-stats, .enemy-stats {
-        position: absolute;
-        background-color: white;
-        border-radius: 10px;
-        min-width: 120px;
-        box-shadow: 0 0 10px 0px #afafaf;
-	}
-
-    .my-stats {
-        bottom: 15px;
-        right: 15px;
-	}
-
     .field {
         .enemy-field.attack-mode div:not(.empty-item) {
             background-color: tomato;
@@ -974,4 +961,8 @@ const EnemyStatsBox = styled(StatsBox)`
 			opacity: 0.7;
 		} 
 	}
+`
+const AllyStatsBox = styled(StatsBox)`
+	bottom: 15px;
+	right: 15px;
 `

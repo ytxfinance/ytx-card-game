@@ -12,11 +12,11 @@ export default class WelcomePage extends Component {
 		return (
 			<div className="page welcome-page">
 				<h1>Welcome to YTX Decentralized Cards Game!</h1>
-				<div className="link-container">
+				<LinkContainer>
 					<BoxyLink to="/create">
 						Create game
 					</BoxyLink>
-				</div>
+				</LinkContainer>
 
 				<GameList />
 			</div>
@@ -40,4 +40,9 @@ const BoxyLink = styled(Link)`
 		color: whitesmoke;
 		background-color: #000000;		
 	}
+`
+
+const LinkContainer = styled.div`
+	display: flex;
+	flex-direction: column;
 `

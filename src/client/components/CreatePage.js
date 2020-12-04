@@ -49,7 +49,7 @@ export default () => {
 	return (
 		<div className="page welcome-page">
 			<h1>Create a game</h1>
-			<div className={isWaiting ? 'link-container' : 'hidden'}>
+			<LinkContainer hidden={!isWaiting}>
 				<b className={isWaiting ? '' : 'hidden'}>
 					The game will start automatically as soon as someone joins
 					your game.
@@ -64,8 +64,8 @@ export default () => {
 				>
 					Cancel Game
 				</BoxyLink>
-			</div>
-			<div className={isWaiting ? 'hidden' : 'link-container'}>
+			</LinkContainer>
+			<LinkContainer hidden={isWaiting}>
 				<p>
 					Set how many YTX you want to bet for the game, press the
 					button below to create a game.
@@ -97,7 +97,7 @@ export default () => {
 				>
 					Create
 				</BoxyLink>
-			</div>
+			</LinkContainer>
 		</div>
 	)
 }
@@ -144,4 +144,9 @@ const BoxyLink = styled(Button)`
 		color: whitesmoke;
 		background-color: #000000;		
 	}
+`
+const LinkContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	display: ${props => props.hidden ? "none" : "block"};
 `

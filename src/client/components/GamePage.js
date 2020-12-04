@@ -197,6 +197,7 @@ const Board = (props) => {
 export default () => {
 	const { state, dispatch } = useContext(store)
 	const [gameOver, setGameOver] = useState(null)
+	const [showTimeout, setShowTimeout] = useState(null)
 	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
 		SECONDS_PER_TURN,
 	)
@@ -213,6 +214,21 @@ export default () => {
 		}
 		setListeners()
 	}, [])
+
+	useEffect(() => {
+		window.clearTimeout(showTimeout)
+		if (state.showError) {
+			const timeout = setTimeout(() => {
+				dispatch({
+					type: 'SET_SHOW_ERROR',
+					payload: {
+						showError: false,
+					},
+				})
+			}, 3e3)
+			setShowTimeout(timeout)
+		}
+	}, [state.showError])
 
 	/**
 	 * @dev On render and new-turn a timer will countdown how long left the player has to make a move

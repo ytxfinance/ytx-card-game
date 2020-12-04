@@ -97,7 +97,7 @@ const Board = (props) => {
 			</ExitLink>
 			{state.game ? (
 				<Game className="game">
-					<div
+					<StatsBox
 						className={
 							state.isAttackMode
 								? 'enemy-stats attack-mode'
@@ -120,8 +120,8 @@ const Board = (props) => {
 								: state.game.player1.energy}
 							&nbsp;Energy
 						</p>
-					</div>
-					<div className="my-stats">
+					</StatsBox>
+					<StatsBox className="my-stats">
 						<p>You</p>
 						<p>
 							{state.playerNumber === 1
@@ -135,7 +135,7 @@ const Board = (props) => {
 								: state.game.player2.energy}
 							&nbsp;Energy
 						</p>
-					</div>
+					</StatsBox>
 					<CardContainer className="cards-container enemy-cards-container">
 						{state.visualEnemyHand}
 					</CardContainer>
@@ -968,4 +968,11 @@ const CardContainer = styled.div`
 	margin: 0 auto;
 	flex-wrap: wrap;
 	max-width: 70%;
+`
+const StatsBox = styled.div`
+	position: absolute;
+	background-color: white;
+	border-radius: 10px;
+	min-width: 120px;
+	box-shadow: 0 0 10px 0px #afafaf;
 `

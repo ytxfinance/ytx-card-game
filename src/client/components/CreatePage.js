@@ -47,7 +47,7 @@ export default () => {
 	}
 
 	return (
-		<div className="page welcome-page">
+		<WelcomePage>
 			<h1>Create a game</h1>
 			<LinkContainer hidden={!isWaiting}>
 				<b className={isWaiting ? '' : 'hidden'}>
@@ -98,10 +98,26 @@ export default () => {
 					Create
 				</BoxyLink>
 			</LinkContainer>
-		</div>
+		</WelcomePage>
 	)
 }
 
+const WelcomePage = styled(Page)`
+	min-width: 250px;
+	max-width: 550px;
+`
+
+const Page = styled.div`
+	box-shadow: 0 0 30px 0 lightgrey;
+	padding: 50px;
+	border-radius: 10px;
+	text-align: center;
+	margin: 0 auto;
+
+	h1 {
+		margin-top: 0;
+	}
+`
 const Button = styled.button`
 	background-color: rgb(42, 90, 162);
 	border: none;

@@ -10,7 +10,7 @@ export default class WelcomePage extends Component {
 
 	render() {
 		return (
-			<div className="page welcome-page">
+			<WelcomePage>
 				<h1>Welcome to YTX Decentralized Cards Game!</h1>
 				<LinkContainer>
 					<BoxyLink to="/create">
@@ -19,11 +19,27 @@ export default class WelcomePage extends Component {
 				</LinkContainer>
 
 				<GameList />
-			</div>
+			</WelcomePage>
 		)
 	}
 }
 
+const WelcomePage = styled(Page)`
+	min-width: 250px;
+	max-width: 550px;
+`
+
+const Page = styled.div`
+	box-shadow: 0 0 30px 0 lightgrey;
+	padding: 50px;
+	border-radius: 10px;
+	text-align: center;
+	margin: 0 auto;
+
+	h1 {
+		margin-top: 0;
+	}
+`
 const BoxyLink = styled(Link)`
 	color: white;
 	text-decoration: none;

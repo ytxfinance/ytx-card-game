@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import styled from 'styled-components'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
 import { store } from './Store'
 const HAND_SIZE = GAME_CONFIG.maxCardsInHand
@@ -416,7 +417,8 @@ export default () => {
 					}
 					key={i + Math.random()}
 					onClick={(e) => {
-						if (state.isAttackMode & enemySortedField[i]) attackField(e.currentTarget)
+						if (state.isAttackMode & enemySortedField[i])
+							attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -734,23 +736,23 @@ export default () => {
 		if (amITheWinner) {
 			// Display the you win container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer>
 					<h1>You Win!</h1>
 					<p>
 						Congratulations you've earned 180 YTX tokens while 20
 						YTX have been moved to the treasury!
 					</p>
 					<button>Redeem Earnings & Exit</button>
-				</div>,
+				</GameOverContainer>,
 			)
 		} else {
 			// Display the you lost container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer>
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
 					<Link to="/">Exit</Link>
-				</div>,
+				</GameOverContainer>,
 			)
 		}
 	}
@@ -767,3 +769,19 @@ export default () => {
 		</>
 	)
 }
+
+const GameOverContainer = styled.div`
+	position: fixed;
+	width: 80vw;
+	height: 50vh;
+	background-color: white;
+	border: 1px solid grey;
+	text-align: center;
+	z-index: 10000;
+	top: 25vh;
+	left: 10vw;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+`

@@ -857,6 +857,30 @@ const StyledCard = styled.div`
 	bottom: 0;
 	display: inline-block;
 
+	&.fire {
+		background-color: rgb(255, 125, 125);
+	}
+	
+	&.water {
+		background-color: rgb(125, 204, 255);
+	}
+	
+	&.wind {
+		background-color: rgb(176, 255, 170);
+	}
+
+	&.life {
+		background-color: rgb(240, 255, 149);
+	}
+
+	&.death {
+		background-color: rgb(180, 180, 180);
+	}
+		
+	&.neutral {
+		background-color: rgb(242, 198, 166);
+	}
+
 	&:not(:last-child) {
 		margin-right: 2px;
 	}

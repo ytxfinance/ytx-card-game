@@ -24,6 +24,7 @@ const Card = (props) => {
 	if (props.isInvoked && isAllyCard) {
 		buttonToDisplay = (
 			<CardButton
+				mtop
 				disabled={
 					!props.canAttack ||
 					state.isOtherPlayerTurn ||
@@ -393,8 +394,7 @@ export default () => {
 					className={enemySortedField[i] ? '' : 'empty-item'}
 					key={i + Math.random()}
 					onClick={(e) => {
-						if (state.isAttackMode & enemySortedField[i])
-							attackField(e.currentTarget)
+						if (enemySortedField[i]) attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -824,6 +824,7 @@ const CardButton = styled(Button)`
 	border: none;
 	border-radius: 2px;
 	padding: 4px;
+	margin-top: ${props=> (props.mtop ? "10px" : "unset")};
 	min-width: auto;
 	width: 90%;
 	font-variant: small-caps;

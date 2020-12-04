@@ -78,7 +78,7 @@ const Board = (props) => {
 	const isGamePaused = () => state.game && state.game.gamePaused
 
 	return (
-		<GamePage>
+		<Page>
 			<h1
 				className={
 					state.gameOver && state.areYouTheWinner
@@ -191,7 +191,7 @@ const Board = (props) => {
 			) : (
 				<p>Game loading...</p>
 			)}
-		</GamePage>
+		</Page>
 	)
 }
 
@@ -770,16 +770,13 @@ export default () => {
 	)
 }
 
-const GamePage = styled(Page)`
-	min-width: 250px;
-`
-
 const Page = styled.div`
 	box-shadow: 0 0 30px 0 lightgrey;
 	padding: 50px;
 	border-radius: 10px;
 	text-align: center;
 	margin: 0 auto;
+	min-width: 250px;
 
 	h1 {
 		margin-top: 0;

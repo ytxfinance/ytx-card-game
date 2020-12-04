@@ -45,4 +45,8 @@ const BoxyLink = styled(Link)`
 const LinkContainer = styled.div`
 	display: flex;
 	flex-direction: column;
+		
+	a:not(:last-child) {
+		margin-bottom: 10px;
+	}
 `

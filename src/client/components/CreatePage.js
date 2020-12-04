@@ -149,4 +149,8 @@ const LinkContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	display: ${props => props.hidden ? "none" : "block"};
+	
+	a:not(:last-child) {
+		margin-bottom: 10px;
+	}
 `

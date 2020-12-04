@@ -139,7 +139,7 @@ const Board = (props) => {
 					<CardContainer className="cards-container enemy-cards-container">
 						{state.visualEnemyHand}
 					</CardContainer>
-					<div className="field">
+					<Field className="field">
 						<EnemyField
 							className={
 								state.isAttackMode
@@ -152,7 +152,7 @@ const Board = (props) => {
 						<FriendlyField className="friendly-field">
 							{state.allyFieldHtml}
 						</FriendlyField>
-					</div>
+					</Field>
 					<CardContainer className="cards-container ally-cards-container">
 						{state.visualAllyHand}
 					</CardContainer>
@@ -914,17 +914,6 @@ const Game = styled.div`
     display: grid;
     align-items: center;
     margin: 0 auto;
-
-    .field {
-        .enemy-field.attack-mode div:not(.empty-item) {
-            background-color: tomato;
-            cursor: pointer;
-
-            &:hover {
-				opacity: 0.7;
-			}
-		}
-	}
 `
 const ActionContainer = styled.div`
 	position: absolute;
@@ -965,4 +954,14 @@ const EnemyStatsBox = styled(StatsBox)`
 const AllyStatsBox = styled(StatsBox)`
 	bottom: 15px;
 	right: 15px;
+`
+const Field = styled.div`
+	.enemy-field.attack-mode div:not(.empty-item) {
+		background-color: tomato;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
 `

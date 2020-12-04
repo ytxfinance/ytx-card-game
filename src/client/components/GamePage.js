@@ -136,9 +136,9 @@ const Board = (props) => {
 							&nbsp;Energy
 						</p>
 					</div>
-					<div className="cards-container enemy-cards-container">
+					<CardContainer className="cards-container enemy-cards-container">
 						{state.visualEnemyHand}
-					</div>
+					</CardContainer>
 					<div className="field">
 						<EnemyField
 							className={
@@ -153,9 +153,9 @@ const Board = (props) => {
 							{state.allyFieldHtml}
 						</FriendlyField>
 					</div>
-					<div className="cards-container ally-cards-container">
+					<CardContainer className="cards-container ally-cards-container">
 						{state.visualAllyHand}
-					</div>
+					</CardContainer>
 					<ActionContainer className="actions-container">
 						<Button
 							className="end-turn"
@@ -943,15 +943,6 @@ const Game = styled.div`
 		}
 	}
 
-    .cards-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 auto;
-        flex-wrap: wrap;
-        max-width: 70%;		
-	}
-
     .field {
         .enemy-field.attack-mode div:not(.empty-item) {
             background-color: tomato;
@@ -969,4 +960,12 @@ const ActionContainer = styled.div`
 	min-width: 120px;
 	display: flex;
 	flex-direction: column;
+`
+const CardContainer = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 0 auto;
+	flex-wrap: wrap;
+	max-width: 70%;
 `

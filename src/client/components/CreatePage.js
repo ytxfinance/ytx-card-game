@@ -67,17 +67,15 @@ export default () => {
 					Set how many YTX you want to bet for the game, press the
 					button below to create a game.
 				</p>
-				<input
+				<Input
 					type="text"
-					className="margin-bot"
 					placeholder="Game name..."
 					onChange={(e) => {
 						setGameName(e.target.value)
 					}}
 				/>
-				<input
+				<Input
 					type="number"
-					className="margin-bot"
 					placeholder="Your YTX bet..."
 					onChange={(e) => {
 						dispatch({
@@ -159,4 +157,13 @@ const LinkContainer = styled.div`
 	a:not(:last-child) {
 		margin-bottom: 10px;
 	}
+`
+const Input = styled.input`
+	padding: 20px;
+	border-radius: 10px;
+	font-size: 15pt;
+	border: 1px solid lightgrey;
+	width: 100%;
+	box-sizing: border-box;
+	margin-bottom: 20px
 `

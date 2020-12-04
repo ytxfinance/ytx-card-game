@@ -366,12 +366,8 @@ export default () => {
 		// Populate ally field with ally invoked cards or empty placeholders
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
-				<div
-					className={
-						allySortedField[i]
-							? 'field-item'
-							: 'field-item empty-item'
-					}
+				<FieldItem
+					className={allySortedField[i] ? '' : 'empty-item'}
 					key={i + Math.random()}
 				>
 					{allySortedField[i] ? (
@@ -390,15 +386,11 @@ export default () => {
 					) : (
 						''
 					)}
-				</div>,
+				</FieldItem>,
 			)
 			enemyFieldHtml.push(
-				<div
-					className={
-						enemySortedField[i]
-							? 'field-item'
-							: 'field-item empty-item'
-					}
+				<FieldItem
+					className={enemySortedField[i] ? '' : 'empty-item'}
 					key={i + Math.random()}
 					onClick={(e) => {
 						if (state.isAttackMode & enemySortedField[i])
@@ -421,7 +413,7 @@ export default () => {
 					) : (
 						''
 					)}
-				</div>,
+				</FieldItem>,
 			)
 		}
 
@@ -888,4 +880,12 @@ const ResultMsg = styled.h1`
 	font-size: ${(props) => (props.winner || props.loser ? '18pt' : '32px')};
 	color: ${(props) =>
 		props.winner ? 'green' : props.loser ? 'tomato' : 'black'};
+`
+const FieldItem = styled.div`
+	background-color: lightgrey;
+	width: 120px;
+	height: 150px;
+	display: grid;
+	justify-items: center;
+	align-items: center;
 `

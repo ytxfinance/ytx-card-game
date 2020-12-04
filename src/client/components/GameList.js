@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import styled from 'styled-components'
 import { store } from './Store'
 
 export default () => {
@@ -18,12 +19,12 @@ export default () => {
 	}
 
 	return (
-		<ul className="game-list-container">
+		<GameListContainer>
 			{!state.gameList || state.gameList.length == 0 ? (
 				<p>No games available yet...</p>
 			) : (
 				state.gameList.map((item) => (
-					<li key={item.gameId} className="game-list-item">
+					<GameListItem key={item.gameId}>
 						<b>{item.gameName}</b>
 						<span>{item.ytxBet} YTX</span>
 						<button
@@ -33,9 +34,19 @@ export default () => {
 						>
 							Join
 						</button>
-					</li>
+					</GameListItem>
 				))
 			)}
-		</ul>
+		</GameListContainer>
 	)
 }
+
+const GameListContainer = styled.ul`
+	border: 1px solid grey;
+	list-style-type: none;
+`
+const GameListItem = styled.li`
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`

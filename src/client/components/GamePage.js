@@ -162,7 +162,7 @@ const Board = (props) => {
 					<div className="cards-container ally-cards-container">
 						{state.visualAllyHand}
 					</div>
-					<div class="actions-container">
+					<div className="actions-container">
 						<button
 							className="end-turn"
 							disabled={state.isOtherPlayerTurn || isGamePaused()}
@@ -197,6 +197,7 @@ const Board = (props) => {
 export default () => {
 	const { state, dispatch } = useContext(store)
 	const [gameOver, setGameOver] = useState(null)
+	const [showTimeout, setShowTimeout] = useState(null)
 	const [turnCountdownTimer, setTurnCountdownTimer] = useState(
 		SECONDS_PER_TURN,
 	)
@@ -213,6 +214,21 @@ export default () => {
 		}
 		setListeners()
 	}, [])
+
+	useEffect(() => {
+		window.clearTimeout(showTimeout)
+		if (state.showError) {
+			const timeout = setTimeout(() => {
+				dispatch({
+					type: 'SET_SHOW_ERROR',
+					payload: {
+						showError: false,
+					},
+				})
+			}, 3e3)
+			setShowTimeout(timeout)
+		}
+	}, [state.showError])
 
 	/**
 	 * @dev On render and new-turn a timer will countdown how long left the player has to make a move
@@ -365,7 +381,14 @@ export default () => {
 		// Populate ally field with ally invoked cards or empty placeholders
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
-				<div className="field-item" key={i + Math.random()}>
+				<div
+					className={
+						allySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
+					key={i + Math.random()}
+				>
 					{allySortedField[i] ? (
 						<Card
 							{...allySortedField[i]}
@@ -386,10 +409,14 @@ export default () => {
 			)
 			enemyFieldHtml.push(
 				<div
-					className="field-item"
+					className={
+						enemySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
 					key={i + Math.random()}
 					onClick={(e) => {
-						if (state.isAttackMode) attackField(e.currentTarget)
+						if (state.isAttackMode & enemySortedField[i]) attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -641,31 +668,31 @@ export default () => {
 	const attackField = (target) => {
 		console.log('Attack Field executed')
 		const currentGame = state.game
-
-		if (!currentGame) {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: 'Current game not found',
-				},
-			})
-		}
-
-		if (currentGame.status === 'ENDED') {
-			return dispatch({
-				type: 'SET_ERROR',
-				payload: {
-					error: 'Game is already over.',
-				},
-			})
-		}
-		// Disables the selected card from attacking again
 		toggleAttackMode(0)
-		state.socket.emit('attacked-field', {
-			currentGameID: currentGame.gameId,
-			attackingCardID: state.attackingCardId,
-			enemyCardID: target.firstChild.dataset.id,
-		})
+		if (target.firstChild) {
+			if (!currentGame) {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: 'Current game not found',
+					},
+				})
+			}
+
+			if (currentGame.status === 'ENDED') {
+				return dispatch({
+					type: 'SET_ERROR',
+					payload: {
+						error: 'Game is already over.',
+					},
+				})
+			}
+			state.socket.emit('attacked-field', {
+				currentGameID: currentGame.gameId,
+				attackingCardID: state.attackingCardId,
+				enemyCardID: target.firstChild.dataset.id,
+			})
+		}
 	}
 
 	/**

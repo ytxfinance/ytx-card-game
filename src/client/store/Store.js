@@ -87,7 +87,6 @@ const StateProvider = ({ children }) => {
 				return newState
 			case 'SET_GAME':
 				console.log('set game', action.payload.game)
-
 				newState = {
 					...state,
 					game: action.payload.game,

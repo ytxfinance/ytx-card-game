@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
-import GameList from './GameList'
+import GameList from '../components/GameList'
 
 export default class WelcomePage extends Component {
 	constructor(props) {

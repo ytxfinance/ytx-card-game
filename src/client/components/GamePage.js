@@ -96,7 +96,7 @@ const Board = (props) => {
 				Exit
 			</ExitLink>
 			{state.game ? (
-				<div className="game">
+				<Game className="game">
 					<div
 						className={
 							state.isAttackMode
@@ -140,7 +140,7 @@ const Board = (props) => {
 						{state.visualEnemyHand}
 					</div>
 					<div className="field">
-						<div
+						<EnemyField
 							className={
 								state.isAttackMode
 									? 'enemy-field attack-mode'
@@ -148,15 +148,15 @@ const Board = (props) => {
 							}
 						>
 							{state.enemyFieldHtml}
-						</div>
-						<div className="friendly-field">
+						</EnemyField>
+						<FriendlyField className="friendly-field">
 							{state.allyFieldHtml}
-						</div>
+						</FriendlyField>
 					</div>
 					<div className="cards-container ally-cards-container">
 						{state.visualAllyHand}
 					</div>
-					<div className="actions-container">
+					<ActionContainer className="actions-container">
 						<Button
 							className="end-turn"
 							disabled={state.isOtherPlayerTurn || isGamePaused()}
@@ -179,8 +179,8 @@ const Board = (props) => {
 						>
 							Surrender
 						</Button>
-					</div>
-				</div>
+					</ActionContainer>
+				</Game>
 			) : (
 				<p>Game loading...</p>
 			)}
@@ -368,7 +368,7 @@ export default () => {
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
 				<FieldItem
-					className={allySortedField[i] ? '' : 'empty-item'}
+					className={allySortedField[i] ? 'field-item' : 'field-item empty-item'}
 					key={i + Math.random()}
 				>
 					{allySortedField[i] ? (
@@ -391,7 +391,7 @@ export default () => {
 			)
 			enemyFieldHtml.push(
 				<FieldItem
-					className={enemySortedField[i] ? '' : 'empty-item'}
+					className={enemySortedField[i] ? 'field-item' : 'field-item empty-item'}
 					key={i + Math.random()}
 					onClick={(e) => {
 						if (enemySortedField[i]) attackField(e.currentTarget)
@@ -889,4 +889,84 @@ const FieldItem = styled.div`
 	display: grid;
 	justify-items: center;
 	align-items: center;
+`
+const FriendlyField = styled.div`
+	display: grid;
+	grid-auto-flow: column;
+	grid-gap: 5px;
+	justify-items: center;
+	width: 70%;
+	margin: 9px auto;
+`
+const EnemyField = styled.div`
+	display: grid;
+	grid-auto-flow: column;
+	grid-gap: 5px;
+	justify-items: center;
+	width: 70%;
+	margin: 9px auto;
+`
+const Game = styled.div`
+    width: 900px;
+    min-height: 600px;
+    background-color: whitesmoke;
+    position: relative;
+    display: grid;
+    align-items: center;
+    margin: 0 auto;
+
+    .my-stats, .enemy-stats {
+        position: absolute;
+        background-color: white;
+        border-radius: 10px;
+        min-width: 120px;
+        box-shadow: 0 0 10px 0px #afafaf;
+	}
+
+    .my-stats {
+        bottom: 15px;
+        right: 15px;
+	}
+
+    .enemy-stats {
+        top: 15px;
+        left: 15px;
+
+        &.attack-mode {
+            background-color: tomato;
+            cursor: pointer;
+            color: white;
+
+            &:hover {
+				opacity: 0.7;
+			} 
+		}
+	}
+
+    .cards-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+        flex-wrap: wrap;
+        max-width: 70%;		
+	}
+
+    .field {
+        .enemy-field.attack-mode div:not(.empty-item) {
+            background-color: tomato;
+            cursor: pointer;
+
+            &:hover {
+				opacity: 0.7;
+			}
+		}
+	}
+`
+const ActionContainer = styled.div`
+	position: absolute;
+	right: 8px;
+	min-width: 120px;
+	display: flex;
+	flex-direction: column;
 `

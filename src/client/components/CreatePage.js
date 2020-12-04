@@ -165,5 +165,5 @@ const Input = styled.input`
 	border: 1px solid lightgrey;
 	width: 100%;
 	box-sizing: border-box;
-	margin-bottom: 20px
+	margin-bottom: 20px;
 `

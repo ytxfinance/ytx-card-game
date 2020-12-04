@@ -79,21 +79,16 @@ const Board = (props) => {
 
 	return (
 		<Page>
-			<h1
-				className={
-					state.gameOver && state.areYouTheWinner
-						? 'winner-message'
-						: state.gameOver && !state.areYouTheWinner
-						? 'loser-message'
-						: ''
-				}
+			<ResultMsg
+				winner={state.gameOver && state.areYouTheWinner}
+				loser={state.gameOver && !state.areYouTheWinner}
 			>
 				{state.gameOver && state.areYouTheWinner
 					? 'Congratulations! You are the winner!'
 					: state.gameOver && !state.areYouTheWinner
 					? 'You lost! Better luck next time!'
 					: 'Game On'}
-			</h1>
+			</ResultMsg>
 			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
 			<p>Timer: {props.turnCountdownTimer}</p>
 			<ExitLink hidden={!state.gameOver} to="/">
@@ -860,11 +855,11 @@ const StyledCard = styled.div`
 	&.fire {
 		background-color: rgb(255, 125, 125);
 	}
-	
+
 	&.water {
 		background-color: rgb(125, 204, 255);
 	}
-	
+
 	&.wind {
 		background-color: rgb(176, 255, 170);
 	}
@@ -876,7 +871,7 @@ const StyledCard = styled.div`
 	&.death {
 		background-color: rgb(180, 180, 180);
 	}
-		
+
 	&.neutral {
 		background-color: rgb(242, 198, 166);
 	}
@@ -888,4 +883,9 @@ const StyledCard = styled.div`
 	.spacer {
 		height: 5px;
 	}
+`
+const ResultMsg = styled.h1`
+	font-size: ${(props) => (props.winner || props.loser ? '18pt' : '32px')};
+	color: ${(props) =>
+		props.winner ? 'green' : props.loser ? 'tomato' : 'black'};
 `

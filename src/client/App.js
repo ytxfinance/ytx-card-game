@@ -10,6 +10,19 @@ import io from 'socket.io-client'
 import { store, StateProvider } from './components/Store'
 import './index.styl'
 
+const ErrorMsg = styled.p`
+	color: tomato;
+	font-size: 14pt;
+	text-align: center;
+	display: ${(props) => (props.hidden ? 'none' : 'block')};
+`
+const SuccessMsg = styled.p`
+	color: green;
+	font-size: 14pt;
+	text-align: center;
+	display: ${(props) => (props.hidden ? 'none' : 'block')};
+`
+
 const App = () => {
 	const { state, dispatch } = useContext(store)
 	const [showTimeout, setShowTimeout] = useState(null)
@@ -167,19 +180,6 @@ const App = () => {
 		})
 	}
 
-	const ErrorMsg = styled.p`
-		color: tomato;
-		font-size: 14pt;
-		text-align: center;
-		display: ${(props) => (props.hidden ? 'none' : 'block')};
-	`
-	const SuccessMsg = styled.p`
-		color: green;
-		font-size: 14pt;
-		text-align: center;
-		display: ${(props) => (props.hidden ? 'none' : 'block')};
-	`
-	
 	return (
 		<div>
 			<SuccessMsg hidden={!state.showSuccess}>{state.success}</SuccessMsg>

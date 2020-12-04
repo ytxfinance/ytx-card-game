@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react'
+import styled from 'styled-components'
 import { store } from './Store'
 
 export default () => {
@@ -57,13 +58,12 @@ export default () => {
 					<br />
 					<br />
 				</b>
-				<button
+				<BoxyLink
 					type="button"
-					className="boxy-link"
 					onClick={() => cancelCreateGame()}
 				>
 					Cancel Game
-				</button>
+				</BoxyLink>
 			</div>
 			<div className={isWaiting ? 'hidden' : 'link-container'}>
 				<p>
@@ -91,14 +91,57 @@ export default () => {
 						})
 					}}
 				/>
-				<button
+				<BoxyLink
 					type="button"
-					className="boxy-link"
 					onClick={() => createGame()}
 				>
 					Create
-				</button>
+				</BoxyLink>
 			</div>
 		</div>
 	)
 }
+
+const Button = styled.button`
+	background-color: rgb(42, 90, 162);
+	border: none;
+	border-radius: 10px;
+	padding: 20px;
+	color: white;;
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+	min-width: 200px;
+	
+	&:hover {
+		opacity: 0.7;
+	}
+
+	&:active {
+		background-color: rgb(0, 98, 139);
+	}
+
+	&:disabled {
+		background-color: rgb(105, 102, 102);
+		opacity: 0.7;
+		cursor: not-allowed;		
+	}
+
+`
+const BoxyLink = styled(Button)`
+	color: white;
+	text-decoration: none;
+	padding: 20px 0;
+	width: 100%;
+	text-align: center;
+	background-color: #444444;
+
+	&:hover {
+		background-color: #2e2e2e;
+	}
+
+	&:active {
+		color: whitesmoke;
+		background-color: #000000;		
+	}
+`

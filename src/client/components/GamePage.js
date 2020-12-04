@@ -905,6 +905,15 @@ const EnemyField = styled.div`
 	justify-items: center;
 	width: 70%;
 	margin: 9px auto;
+
+	&.attack-mode div:not(.empty-item) {
+		background-color: tomato;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
 `
 const Game = styled.div`
     width: 900px;
@@ -956,12 +965,5 @@ const AllyStatsBox = styled(StatsBox)`
 	right: 15px;
 `
 const Field = styled.div`
-	.enemy-field.attack-mode div:not(.empty-item) {
-		background-color: tomato;
-		cursor: pointer;
 
-		&:hover {
-			opacity: 0.7;
-		}
-	}
 `

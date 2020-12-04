@@ -55,12 +55,12 @@ const Button = styled.button`
 	border: none;
 	border-radius: 10px;
 	padding: 20px;
-	color: white;;
+	color: white;
 	cursor: pointer;
 	display: inline-block;
 	text-decoration: none;
 	min-width: 200px;
-	
+
 	&:hover {
 		opacity: 0.7;
 	}
@@ -72,7 +72,6 @@ const Button = styled.button`
 	&:disabled {
 		background-color: rgb(105, 102, 102);
 		opacity: 0.7;
-		cursor: not-allowed;		
+		cursor: not-allowed;
 	}
-
 `

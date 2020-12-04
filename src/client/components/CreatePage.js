@@ -58,10 +58,7 @@ export default () => {
 					<br />
 					<br />
 				</b>
-				<BoxyLink
-					type="button"
-					onClick={() => cancelCreateGame()}
-				>
+				<BoxyLink type="button" onClick={() => cancelCreateGame()}>
 					Cancel Game
 				</BoxyLink>
 			</LinkContainer>
@@ -91,10 +88,7 @@ export default () => {
 						})
 					}}
 				/>
-				<BoxyLink
-					type="button"
-					onClick={() => createGame()}
-				>
+				<BoxyLink type="button" onClick={() => createGame()}>
 					Create
 				</BoxyLink>
 			</LinkContainer>
@@ -120,12 +114,12 @@ const Button = styled.button`
 	border: none;
 	border-radius: 10px;
 	padding: 20px;
-	color: white;;
+	color: white;
 	cursor: pointer;
 	display: inline-block;
 	text-decoration: none;
 	min-width: 200px;
-	
+
 	&:hover {
 		opacity: 0.7;
 	}
@@ -137,9 +131,8 @@ const Button = styled.button`
 	&:disabled {
 		background-color: rgb(105, 102, 102);
 		opacity: 0.7;
-		cursor: not-allowed;		
+		cursor: not-allowed;
 	}
-
 `
 const BoxyLink = styled(Button)`
 	color: white;
@@ -155,14 +148,14 @@ const BoxyLink = styled(Button)`
 
 	&:active {
 		color: whitesmoke;
-		background-color: #000000;		
+		background-color: #000000;
 	}
 `
 const LinkContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	display: ${props => props.hidden ? "none" : "block"};
-	
+	display: ${(props) => (props.hidden ? 'none' : 'block')};
+
 	a:not(:last-child) {
 		margin-bottom: 10px;
 	}

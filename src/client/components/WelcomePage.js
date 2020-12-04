@@ -13,9 +13,7 @@ export default class WelcomePage extends Component {
 			<Page>
 				<h1>Welcome to YTX Decentralized Cards Game!</h1>
 				<LinkContainer>
-					<BoxyLink to="/create">
-						Create game
-					</BoxyLink>
+					<BoxyLink to="/create">Create game</BoxyLink>
 				</LinkContainer>
 
 				<GameList />
@@ -51,14 +49,14 @@ const BoxyLink = styled(Link)`
 
 	&:active {
 		color: whitesmoke;
-		background-color: #000000;		
+		background-color: #000000;
 	}
 `
 
 const LinkContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-		
+
 	a:not(:last-child) {
 		margin-bottom: 10px;
 	}

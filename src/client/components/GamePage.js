@@ -97,7 +97,7 @@ const Board = (props) => {
 			</ExitLink>
 			{state.game ? (
 				<Game className="game">
-					<StatsBox
+					<EnemyStatsBox
 						className={
 							state.isAttackMode
 								? 'enemy-stats attack-mode'
@@ -120,7 +120,7 @@ const Board = (props) => {
 								: state.game.player1.energy}
 							&nbsp;Energy
 						</p>
-					</StatsBox>
+					</EnemyStatsBox>
 					<StatsBox className="my-stats">
 						<p>You</p>
 						<p>
@@ -928,21 +928,6 @@ const Game = styled.div`
         right: 15px;
 	}
 
-    .enemy-stats {
-        top: 15px;
-        left: 15px;
-
-        &.attack-mode {
-            background-color: tomato;
-            cursor: pointer;
-            color: white;
-
-            &:hover {
-				opacity: 0.7;
-			} 
-		}
-	}
-
     .field {
         .enemy-field.attack-mode div:not(.empty-item) {
             background-color: tomato;
@@ -975,4 +960,18 @@ const StatsBox = styled.div`
 	border-radius: 10px;
 	min-width: 120px;
 	box-shadow: 0 0 10px 0px #afafaf;
+`
+const EnemyStatsBox = styled(StatsBox)`
+	top: 15px;
+	left: 15px;
+
+	&.attack-mode {
+		background-color: tomato;
+		cursor: pointer;
+		color: white;
+
+		&:hover {
+			opacity: 0.7;
+		} 
+	}
 `

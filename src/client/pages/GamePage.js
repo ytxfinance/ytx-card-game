@@ -1,7 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import GAME_CONFIG from '../../../GAME_CONFIG.json';
-import { Board, BoardCard } from '../components';
+import GAME_CONFIG from '../../../GAME_CONFIG.json'
+import { Board, BoardCard } from '../components'
+import styled from 'styled-components'
 import { store } from '../store/Store'
 const HAND_SIZE = GAME_CONFIG.maxCardsInHand
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
@@ -72,12 +73,18 @@ export default () => {
 			visualEnemyHand =
 				state.game.player1.hand.length > 0
 					? state.game.player1.hand.map(() => (
-							<div className="card" key={Math.random()}></div>
+							<StyledCard
+								className="card"
+								key={Math.random()}
+							></StyledCard>
 					  ))
 					: [
-							<div className="empty-hand" key={Math.random()}>
+							<EmptyHand
+								className="empty-hand"
+								key={Math.random()}
+							>
 								Empty hand
-							</div>,
+							</EmptyHand>,
 					  ]
 			visualAllyHand = generateHandCards(state.game.player2.hand, 2)
 		} else {
@@ -420,7 +427,12 @@ export default () => {
 	const attackField = (target) => {
 		console.log('Attack Field executed')
 		const currentGame = state.game
-		console.log(target, target.firstChild.dataset.id, state.attackingCardId, 'target field attack')
+		console.log(
+			target,
+			target.firstChild.dataset.id,
+			state.attackingCardId,
+			'target field attack',
+		)
 		if (!currentGame) {
 			return dispatch({
 				type: 'SET_ERROR',
@@ -439,7 +451,7 @@ export default () => {
 			})
 		}
 		// Disables the selected card from attacking again
-		toggleAttackMode(0);
+		toggleAttackMode(0)
 		state.socket.emit('attacked-field', {
 			currentGameID: currentGame.gameId,
 			attackingCardID: state.attackingCardId,
@@ -486,23 +498,23 @@ export default () => {
 		if (amITheWinner) {
 			// Display the you win container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer className="game-over-container">
 					<h1>You Win!</h1>
 					<p>
 						Congratulations you've earned 180 YTX tokens while 20
 						YTX have been moved to the treasury!
 					</p>
-					<button>Redeem Earnings & Exit</button>
-				</div>,
+					<Button>Redeem Earnings & Exit</Button>
+				</GameOverContainer>,
 			)
 		} else {
 			// Display the you lost container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer className="game-over-container">
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
 					<Link to="/">Exit</Link>
-				</div>,
+				</GameOverContainer>,
 			)
 		}
 	}
@@ -519,3 +531,82 @@ export default () => {
 		</>
 	)
 }
+
+const GameOverContainer = styled.div`
+	position: fixed;
+	width: 80vw;
+	height: 50vh;
+	background-color: white;
+	border: 1px solid grey;
+	text-align: center;
+	z-index: 10000;
+	top: 25vh;
+	left: 10vw;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+`
+
+const Button = styled.button`
+	background-color: rgb(42, 90, 162);
+	border: none;
+	border-radius: 10px;
+	padding: 20px;
+	color: white;
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+	&:hover {
+		opacity: 0.7;
+	}
+	&:active {
+		background-color: rgb(0, 98, 139);
+	}
+	&:disabled {
+		background-color: rgb(105, 102, 102);
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+`
+
+const EmptyHand = styled.div`
+	height: 110px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: grey;
+	font-size: 14pt;
+`
+const StyledCard = styled.div`
+	width: 92px;
+	height: 125px;
+	border: 1px solid #000;
+	position: relative;
+	bottom: 0;
+	display: inline-block;
+	&.fire {
+		background-color: rgb(255, 125, 125);
+	}
+	&.water {
+		background-color: rgb(125, 204, 255);
+	}
+	&.wind {
+		background-color: rgb(176, 255, 170);
+	}
+	&.life {
+		background-color: rgb(240, 255, 149);
+	}
+	&.death {
+		background-color: rgb(180, 180, 180);
+	}
+	&.neutral {
+		background-color: rgb(242, 198, 166);
+	}
+	&:not(:last-child) {
+		margin-right: 2px;
+	}
+	.spacer {
+		height: 5px;
+	}
+`

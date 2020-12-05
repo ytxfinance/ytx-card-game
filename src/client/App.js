@@ -1,27 +1,13 @@
 import React, { useEffect, useContext, useState } from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Route, Switch, useHistory } from 'react-router-dom'
-import styled from 'styled-components'
-import WelcomePage from './components/WelcomePage'
-import CreatePage from './components/CreatePage'
-import GamePage from './components/GamePage'
+import WelcomePage from './pages/WelcomePage'
+import CreatePage from './pages/CreatePage'
+import GamePage from './pages/GamePage'
 import Web3 from 'web3'
 import io from 'socket.io-client'
-import { store, StateProvider } from './components/Store'
+import { store, StateProvider } from './store/Store'
 import './index.styl'
-
-const ErrorMsg = styled.p`
-	color: tomato;
-	font-size: 14pt;
-	text-align: center;
-	display: ${(props) => (props.hidden ? 'none' : 'block')};
-`
-const SuccessMsg = styled.p`
-	color: green;
-	font-size: 14pt;
-	text-align: center;
-	display: ${(props) => (props.hidden ? 'none' : 'block')};
-`
 
 const App = () => {
 	const { state, dispatch } = useContext(store)
@@ -182,8 +168,12 @@ const App = () => {
 
 	return (
 		<div>
-			<SuccessMsg hidden={!state.showSuccess}>{state.success}</SuccessMsg>
-			<ErrorMsg hidden={!state.showError}>{state.error}</ErrorMsg>
+			<p className={state.showSuccess ? 'success-message' : 'hidden'}>
+				{state.success}
+			</p>
+			<p className={state.showError ? 'error-message' : 'hidden'}>
+				{state.error}
+			</p>
 			<Switch>
 				<Route path="/" exact render={() => <WelcomePage />} />
 				<Route path="/create" render={() => <CreatePage />} />

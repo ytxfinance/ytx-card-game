@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import styled from 'styled-components'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
 import { store } from './Store'
 const HAND_SIZE = GAME_CONFIG.maxCardsInHand
@@ -22,7 +23,8 @@ const Card = (props) => {
 	let buttonToDisplay
 	if (props.isInvoked && isAllyCard) {
 		buttonToDisplay = (
-			<button
+			<CardButton
+				mtop
 				disabled={
 					!props.canAttack ||
 					state.isOtherPlayerTurn ||
@@ -33,20 +35,20 @@ const Card = (props) => {
 				}}
 			>
 				Attack
-			</button>
+			</CardButton>
 		)
 	} else if (isAllyCard) {
 		buttonToDisplay = (
 			<div>
-				<button
+				<CardButton
 					disabled={state.isOtherPlayerTurn || isGamePaused()}
 					onClick={() => {
 						props.invokeCard()
 					}}
 				>
-					invoke
-				</button>
-				<button
+					Invoke
+				</CardButton>
+				<CardButton
 					style={{
 						backgroundColor: '#ffad04',
 					}}
@@ -56,19 +58,19 @@ const Card = (props) => {
 					}}
 				>
 					Burn
-				</button>
+				</CardButton>
 			</div>
 		)
 	}
 	return (
-		<div className={'card ' + props.type} data-id={props.dataId}>
+		<StyledCard className={props.type} data-id={props.dataId}>
 			<div>cost: {props.cost}</div>
 			<div>life: {props.life}</div>
 			<div>attack: {props.attack}</div>
 			<div>type: {props.type}</div>
 			<div className="spacer"></div>
 			{buttonToDisplay}
-		</div>
+		</StyledCard>
 	)
 }
 
@@ -77,33 +79,25 @@ const Board = (props) => {
 	const isGamePaused = () => state.game && state.game.gamePaused
 
 	return (
-		<div className="page game-page">
-			<h1
-				className={
-					state.gameOver && state.areYouTheWinner
-						? 'winner-message'
-						: state.gameOver && !state.areYouTheWinner
-						? 'loser-message'
-						: ''
-				}
+		<Page>
+			<ResultMsg
+				winner={state.gameOver && state.areYouTheWinner}
+				loser={state.gameOver && !state.areYouTheWinner}
 			>
 				{state.gameOver && state.areYouTheWinner
 					? 'Congratulations! You are the winner!'
 					: state.gameOver && !state.areYouTheWinner
 					? 'You lost! Better luck next time!'
 					: 'Game On'}
-			</h1>
+			</ResultMsg>
 			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
 			<p>Timer: {props.turnCountdownTimer}</p>
-			<Link
-				className={state.gameOver ? 'margin-bot button-like' : 'hidden'}
-				to="/"
-			>
+			<ExitLink hidden={!state.gameOver} to="/">
 				Exit
-			</Link>
+			</ExitLink>
 			{state.game ? (
-				<div className="game">
-					<div
+				<Game className="game">
+					<EnemyStatsBox
 						className={
 							state.isAttackMode
 								? 'enemy-stats attack-mode'
@@ -126,8 +120,8 @@ const Board = (props) => {
 								: state.game.player1.energy}
 							&nbsp;Energy
 						</p>
-					</div>
-					<div className="my-stats">
+					</EnemyStatsBox>
+					<AllyStatsBox className="my-stats">
 						<p>You</p>
 						<p>
 							{state.playerNumber === 1
@@ -141,12 +135,12 @@ const Board = (props) => {
 								: state.game.player2.energy}
 							&nbsp;Energy
 						</p>
-					</div>
-					<div className="cards-container enemy-cards-container">
+					</AllyStatsBox>
+					<CardContainer className="cards-container enemy-cards-container">
 						{state.visualEnemyHand}
-					</div>
-					<div className="field">
-						<div
+					</CardContainer>
+					<Field className="field">
+						<EnemyField
 							className={
 								state.isAttackMode
 									? 'enemy-field attack-mode'
@@ -154,16 +148,16 @@ const Board = (props) => {
 							}
 						>
 							{state.enemyFieldHtml}
-						</div>
-						<div className="friendly-field">
+						</EnemyField>
+						<FriendlyField className="friendly-field">
 							{state.allyFieldHtml}
-						</div>
-					</div>
-					<div className="cards-container ally-cards-container">
+						</FriendlyField>
+					</Field>
+					<CardContainer className="cards-container ally-cards-container">
 						{state.visualAllyHand}
-					</div>
-					<div className="actions-container">
-						<button
+					</CardContainer>
+					<ActionContainer className="actions-container">
+						<Button
 							className="end-turn"
 							disabled={state.isOtherPlayerTurn || isGamePaused()}
 							onClick={() => {
@@ -171,8 +165,8 @@ const Board = (props) => {
 							}}
 						>
 							End Turn
-						</button>
-						<button
+						</Button>
+						<Button
 							className="end-turn"
 							style={{
 								backgroundColor: 'red',
@@ -184,13 +178,13 @@ const Board = (props) => {
 							}}
 						>
 							Surrender
-						</button>
-					</div>
-				</div>
+						</Button>
+					</ActionContainer>
+				</Game>
 			) : (
 				<p>Game loading...</p>
 			)}
-		</div>
+		</Page>
 	)
 }
 
@@ -271,25 +265,17 @@ export default () => {
 			visualEnemyHand =
 				state.game.player1.hand.length > 0
 					? state.game.player1.hand.map(() => (
-							<div className="card" key={Math.random()}></div>
+							<StyledCard key={Math.random()}></StyledCard>
 					  ))
-					: [
-							<div className="empty-hand" key={Math.random()}>
-								Empty hand
-							</div>,
-					  ]
+					: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 			visualAllyHand = generateHandCards(state.game.player2.hand, 2)
 		} else {
 			visualEnemyHand =
 				state.game.player2.hand.length > 0
 					? state.game.player2.hand.map(() => (
-							<div className="card" key={Math.random()}></div>
+							<StyledCard key={Math.random()}></StyledCard>
 					  ))
-					: [
-							<div className="empty-hand" key={Math.random()}>
-								Empty hand
-							</div>,
-					  ]
+					: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 			visualAllyHand = generateHandCards(state.game.player1.hand, 1)
 		}
 		dispatch({
@@ -381,7 +367,7 @@ export default () => {
 		// Populate ally field with ally invoked cards or empty placeholders
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
-				<div
+				<FieldItem
 					className={
 						allySortedField[i]
 							? 'field-item'
@@ -405,10 +391,10 @@ export default () => {
 					) : (
 						''
 					)}
-				</div>,
+				</FieldItem>,
 			)
 			enemyFieldHtml.push(
-				<div
+				<FieldItem
 					className={
 						enemySortedField[i]
 							? 'field-item'
@@ -416,7 +402,7 @@ export default () => {
 					}
 					key={i + Math.random()}
 					onClick={(e) => {
-						if (state.isAttackMode & enemySortedField[i]) attackField(e.currentTarget)
+						if (enemySortedField[i]) attackField(e.currentTarget)
 					}}
 				>
 					{enemySortedField[i] ? (
@@ -435,7 +421,7 @@ export default () => {
 					) : (
 						''
 					)}
-				</div>,
+				</FieldItem>,
 			)
 		}
 
@@ -460,11 +446,7 @@ export default () => {
 							}}
 						/>
 				  ))
-				: [
-						<div className="empty-hand" key={Math.random()}>
-							Empty hand
-						</div>,
-				  ]
+				: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 		return cards
 	}
 
@@ -734,23 +716,23 @@ export default () => {
 		if (amITheWinner) {
 			// Display the you win container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer>
 					<h1>You Win!</h1>
 					<p>
 						Congratulations you've earned 180 YTX tokens while 20
 						YTX have been moved to the treasury!
 					</p>
-					<button>Redeem Earnings & Exit</button>
-				</div>,
+					<Button>Redeem Earnings & Exit</Button>
+				</GameOverContainer>,
 			)
 		} else {
 			// Display the you lost container
 			setGameOver(
-				<div className="game-over-container">
+				<GameOverContainer>
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
 					<Link to="/">Exit</Link>
-				</div>,
+				</GameOverContainer>,
 			)
 		}
 	}
@@ -767,3 +749,227 @@ export default () => {
 		</>
 	)
 }
+
+const Page = styled.div`
+	box-shadow: 0 0 30px 0 lightgrey;
+	padding: 50px;
+	border-radius: 10px;
+	text-align: center;
+	margin: 0 auto;
+	min-width: 250px;
+
+	h1 {
+		margin-top: 0;
+	}
+`
+const GameOverContainer = styled.div`
+	position: fixed;
+	width: 80vw;
+	height: 50vh;
+	background-color: white;
+	border: 1px solid grey;
+	text-align: center;
+	z-index: 10000;
+	top: 25vh;
+	left: 10vw;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+`
+const ExitLink = styled(Link)`
+	background-color: rgb(42, 90, 162);
+	border: none;
+	border-radius: 10px;
+	padding: 20px;
+	color: white;
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+	min-width: 200px;
+	margin-bottom: 20px;
+	display: ${(props) => (props.hidden ? 'none' : 'block')};
+
+	&:hover {
+		opacity: 0.7;
+	}
+
+	&:active {
+		background-color: rgb(0, 98, 139);
+	}
+
+	&:disabled {
+		background-color: rgb(105, 102, 102);
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+`
+const Button = styled.button`
+	background-color: rgb(42, 90, 162);
+	border: none;
+	border-radius: 10px;
+	padding: 20px;
+	color: white;
+	cursor: pointer;
+	display: inline-block;
+	text-decoration: none;
+
+	&:hover {
+		opacity: 0.7;
+	}
+
+	&:active {
+		background-color: rgb(0, 98, 139);
+	}
+
+	&:disabled {
+		background-color: rgb(105, 102, 102);
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+`
+const CardButton = styled(Button)`
+	border: none;
+	border-radius: 2px;
+	padding: 4px;
+	margin-top: ${(props) => (props.mtop ? '10px' : 'unset')};
+	min-width: auto;
+	width: 90%;
+	font-variant: small-caps;
+`
+const EmptyHand = styled.div`
+	height: 110px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: grey;
+	font-size: 14pt;
+`
+const StyledCard = styled.div`
+	width: 92px;
+	height: 125px;
+	border: 1px solid #000;
+	position: relative;
+	bottom: 0;
+	display: inline-block;
+
+	&.fire {
+		background-color: rgb(255, 125, 125);
+	}
+
+	&.water {
+		background-color: rgb(125, 204, 255);
+	}
+
+	&.wind {
+		background-color: rgb(176, 255, 170);
+	}
+
+	&.life {
+		background-color: rgb(240, 255, 149);
+	}
+
+	&.death {
+		background-color: rgb(180, 180, 180);
+	}
+
+	&.neutral {
+		background-color: rgb(242, 198, 166);
+	}
+
+	&:not(:last-child) {
+		margin-right: 2px;
+	}
+
+	.spacer {
+		height: 5px;
+	}
+`
+const ResultMsg = styled.h1`
+	font-size: ${(props) => (props.winner || props.loser ? '18pt' : '32px')};
+	color: ${(props) =>
+		props.winner ? 'green' : props.loser ? 'tomato' : 'black'};
+`
+const FieldItem = styled.div`
+	background-color: lightgrey;
+	width: 120px;
+	height: 150px;
+	display: grid;
+	justify-items: center;
+	align-items: center;
+`
+const FriendlyField = styled.div`
+	display: grid;
+	grid-auto-flow: column;
+	grid-gap: 5px;
+	justify-items: center;
+	width: 70%;
+	margin: 9px auto;
+`
+const EnemyField = styled.div`
+	display: grid;
+	grid-auto-flow: column;
+	grid-gap: 5px;
+	justify-items: center;
+	width: 70%;
+	margin: 9px auto;
+
+	&.attack-mode div:not(.empty-item) {
+		background-color: tomato;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
+`
+const Game = styled.div`
+	width: 900px;
+	min-height: 600px;
+	background-color: whitesmoke;
+	position: relative;
+	display: grid;
+	align-items: center;
+	margin: 0 auto;
+`
+const ActionContainer = styled.div`
+	position: absolute;
+	right: 8px;
+	min-width: 120px;
+	display: flex;
+	flex-direction: column;
+`
+const CardContainer = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 0 auto;
+	flex-wrap: wrap;
+	max-width: 70%;
+`
+const StatsBox = styled.div`
+	position: absolute;
+	background-color: white;
+	border-radius: 10px;
+	min-width: 120px;
+	box-shadow: 0 0 10px 0px #afafaf;
+`
+const EnemyStatsBox = styled(StatsBox)`
+	top: 15px;
+	left: 15px;
+
+	&.attack-mode {
+		background-color: tomato;
+		cursor: pointer;
+		color: white;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
+`
+const AllyStatsBox = styled(StatsBox)`
+	bottom: 15px;
+	right: 15px;
+`
+const Field = styled.div``

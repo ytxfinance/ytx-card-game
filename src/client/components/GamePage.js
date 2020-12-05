@@ -368,7 +368,11 @@ export default () => {
 		for (let i = 0; i < FIELD_SIZE; i++) {
 			allyFieldHtml.push(
 				<FieldItem
-					className={allySortedField[i] ? 'field-item' : 'field-item empty-item'}
+					className={
+						allySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
 					key={i + Math.random()}
 				>
 					{allySortedField[i] ? (
@@ -391,7 +395,11 @@ export default () => {
 			)
 			enemyFieldHtml.push(
 				<FieldItem
-					className={enemySortedField[i] ? 'field-item' : 'field-item empty-item'}
+					className={
+						enemySortedField[i]
+							? 'field-item'
+							: 'field-item empty-item'
+					}
 					key={i + Math.random()}
 					onClick={(e) => {
 						if (enemySortedField[i]) attackField(e.currentTarget)
@@ -824,7 +832,7 @@ const CardButton = styled(Button)`
 	border: none;
 	border-radius: 2px;
 	padding: 4px;
-	margin-top: ${props=> (props.mtop ? "10px" : "unset")};
+	margin-top: ${(props) => (props.mtop ? '10px' : 'unset')};
 	min-width: auto;
 	width: 90%;
 	font-variant: small-caps;
@@ -916,13 +924,13 @@ const EnemyField = styled.div`
 	}
 `
 const Game = styled.div`
-    width: 900px;
-    min-height: 600px;
-    background-color: whitesmoke;
-    position: relative;
-    display: grid;
-    align-items: center;
-    margin: 0 auto;
+	width: 900px;
+	min-height: 600px;
+	background-color: whitesmoke;
+	position: relative;
+	display: grid;
+	align-items: center;
+	margin: 0 auto;
 `
 const ActionContainer = styled.div`
 	position: absolute;
@@ -957,13 +965,11 @@ const EnemyStatsBox = styled(StatsBox)`
 
 		&:hover {
 			opacity: 0.7;
-		} 
+		}
 	}
 `
 const AllyStatsBox = styled(StatsBox)`
 	bottom: 15px;
 	right: 15px;
 `
-const Field = styled.div`
-
-`
+const Field = styled.div``

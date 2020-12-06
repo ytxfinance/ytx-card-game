@@ -2,7 +2,9 @@ import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
-import { store } from './Store'
+import { Board, BoardCard } from '../components'
+import { store } from '../store/Store'
+
 const HAND_SIZE = GAME_CONFIG.maxCardsInHand
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
 const MIN_CARD_LIFE = GAME_CONFIG.minCardLife
@@ -11,182 +13,6 @@ const MAX_CARD_ATTACK = GAME_CONFIG.maxCardAttack
 const MIN_CARD_ATTACK = GAME_CONFIG.minCardAttack
 const SECONDS_PER_TURN = GAME_CONFIG.secondsPerTurn
 const CARD_TYPES = ['fire', 'water', 'wind', 'life', 'death', 'neutral']
-
-// The individual Card component
-const Card = (props) => {
-	const { state } = useContext(store)
-
-	const isGamePaused = () => state.game && state.game.gamePaused
-
-	let isAllyCard = state.playerNumber === props.playerNumberOwner
-	// If the card is ally, display the attack button or invoke, else don't display actions
-	let buttonToDisplay
-	if (props.isInvoked && isAllyCard) {
-		buttonToDisplay = (
-			<CardButton
-				mtop
-				disabled={
-					!props.canAttack ||
-					state.isOtherPlayerTurn ||
-					isGamePaused()
-				}
-				onClick={() => {
-					props.toggleAttackMode(props.cardId)
-				}}
-			>
-				Attack
-			</CardButton>
-		)
-	} else if (isAllyCard) {
-		buttonToDisplay = (
-			<div>
-				<CardButton
-					disabled={state.isOtherPlayerTurn || isGamePaused()}
-					onClick={() => {
-						props.invokeCard()
-					}}
-				>
-					Invoke
-				</CardButton>
-				<CardButton
-					style={{
-						backgroundColor: '#ffad04',
-					}}
-					disabled={state.isOtherPlayerTurn || isGamePaused()}
-					onClick={() => {
-						props.burnCardOnHand(props.cardId)
-					}}
-				>
-					Burn
-				</CardButton>
-			</div>
-		)
-	}
-	return (
-		<StyledCard className={props.type} data-id={props.dataId}>
-			<div>cost: {props.cost}</div>
-			<div>life: {props.life}</div>
-			<div>attack: {props.attack}</div>
-			<div>type: {props.type}</div>
-			<div className="spacer"></div>
-			{buttonToDisplay}
-		</StyledCard>
-	)
-}
-
-const Board = (props) => {
-	const { state } = useContext(store)
-	const isGamePaused = () => state.game && state.game.gamePaused
-
-	return (
-		<Page>
-			<ResultMsg
-				winner={state.gameOver && state.areYouTheWinner}
-				loser={state.gameOver && !state.areYouTheWinner}
-			>
-				{state.gameOver && state.areYouTheWinner
-					? 'Congratulations! You are the winner!'
-					: state.gameOver && !state.areYouTheWinner
-					? 'You lost! Better luck next time!'
-					: 'Game On'}
-			</ResultMsg>
-			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
-			<p>Timer: {props.turnCountdownTimer}</p>
-			<ExitLink hidden={!state.gameOver} to="/">
-				Exit
-			</ExitLink>
-			{state.game ? (
-				<Game className="game">
-					<EnemyStatsBox
-						className={
-							state.isAttackMode
-								? 'enemy-stats attack-mode'
-								: 'enemy-stats'
-						}
-						onClick={() => {
-							if (state.isAttackMode) props.attackDirectly()
-						}}
-					>
-						<p>Enemy</p>
-						<p>
-							{state.playerNumber === 1
-								? state.game.player2.life
-								: state.game.player1.life}
-							&nbsp;HP
-						</p>
-						<p>
-							{state.playerNumber === 1
-								? state.game.player2.energy
-								: state.game.player1.energy}
-							&nbsp;Energy
-						</p>
-					</EnemyStatsBox>
-					<AllyStatsBox className="my-stats">
-						<p>You</p>
-						<p>
-							{state.playerNumber === 1
-								? state.game.player1.life
-								: state.game.player2.life}
-							&nbsp;HP
-						</p>
-						<p>
-							{state.playerNumber === 1
-								? state.game.player1.energy
-								: state.game.player2.energy}
-							&nbsp;Energy
-						</p>
-					</AllyStatsBox>
-					<CardContainer className="cards-container enemy-cards-container">
-						{state.visualEnemyHand}
-					</CardContainer>
-					<Field className="field">
-						<EnemyField
-							className={
-								state.isAttackMode
-									? 'enemy-field attack-mode'
-									: 'enemy-field'
-							}
-						>
-							{state.enemyFieldHtml}
-						</EnemyField>
-						<FriendlyField className="friendly-field">
-							{state.allyFieldHtml}
-						</FriendlyField>
-					</Field>
-					<CardContainer className="cards-container ally-cards-container">
-						{state.visualAllyHand}
-					</CardContainer>
-					<ActionContainer className="actions-container">
-						<Button
-							className="end-turn"
-							disabled={state.isOtherPlayerTurn || isGamePaused()}
-							onClick={() => {
-								props.endTurn()
-							}}
-						>
-							End Turn
-						</Button>
-						<Button
-							className="end-turn"
-							style={{
-								backgroundColor: 'red',
-								marginTop: '10px',
-							}}
-							disabled={isGamePaused()}
-							onClick={() => {
-								props.surrender()
-							}}
-						>
-							Surrender
-						</Button>
-					</ActionContainer>
-				</Game>
-			) : (
-				<p>Game loading...</p>
-			)}
-		</Page>
-	)
-}
 
 export default () => {
 	const { state, dispatch } = useContext(store)
@@ -258,7 +84,6 @@ export default () => {
 
 	useEffect(() => {
 		if (!state.game) return
-
 		let visualEnemyHand
 		let visualAllyHand
 		if (state.playerNumber === 2) {
@@ -376,7 +201,7 @@ export default () => {
 					key={i + Math.random()}
 				>
 					{allySortedField[i] ? (
-						<Card
+						<BoardCard
 							{...allySortedField[i]}
 							dataId={allySortedField[i].id}
 							key={allySortedField[i].id}
@@ -406,7 +231,7 @@ export default () => {
 					}}
 				>
 					{enemySortedField[i] ? (
-						<Card
+						<BoardCard
 							{...enemySortedField[i]}
 							dataId={enemySortedField[i].id}
 							key={enemySortedField[i].id}
@@ -432,11 +257,10 @@ export default () => {
 		let cards =
 			handCards.length > 0
 				? handCards.map((card) => (
-						<Card
+						<BoardCard
 							{...card}
 							key={card.id}
 							dataId={card.id}
-							invokeCard={() => invokeCard(card)}
 							playerNumberOwner={playerNumberOwner}
 							toggleAttackMode={() => {
 								toggleAttackMode(card.id)
@@ -586,41 +410,6 @@ export default () => {
 		})
 	}
 
-	const invokeCard = (card) => {
-		console.log('invoke card', card)
-		if (!card.isInvoked) {
-			let me
-			if (state.playerNumber === 1) {
-				me = state.game.player1
-			} else {
-				me = state.game.player2
-			}
-			// Invokes a card into the field and updates ally hand with a new deep copy
-			if (me.field.length >= FIELD_SIZE) {
-				return dispatch({
-					type: 'SET_ERROR',
-					payload: {
-						error: 'The field is full',
-					},
-				})
-			}
-			if (card.cost > me.energy) {
-				return dispatch({
-					type: 'SET_ERROR',
-					payload: {
-						error:
-							"You don't have enough energy to invoke this card",
-					},
-				})
-			}
-			card.isInvoked = true
-			state.socket.emit('invoke-card', {
-				game: state.game,
-				card,
-			})
-		}
-	}
-
 	/**
 	 * @dev Burns the selected card on hand and refund a part of the cost as energy to the player
 	 * @param {String} cardID
@@ -632,7 +421,6 @@ export default () => {
 			burnType: 'hand',
 		})
 	}
-
 	const toggleAttackMode = (cardId) => {
 		let isAttackMode = cardId == 0 ? false : !state.isAttackMode
 		dispatch({
@@ -643,7 +431,6 @@ export default () => {
 			},
 		})
 	}
-
 	/**
 	 * @dev Handles the logic for attacking the enemy field card
 	 */

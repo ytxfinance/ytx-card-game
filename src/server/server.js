@@ -672,7 +672,7 @@ io.on('connection', async (socket) => {
 
 		const { currentGameID, attackingCardID, enemyCardID } = data
 		let currentGame
-
+		console.log(data, 'onsocket data')
 		// Check if the game exists
 		try {
 			currentGame = await db.collection('games').findOne({
@@ -702,6 +702,7 @@ io.on('connection', async (socket) => {
 		}
 
 		const { ally, enemy } = getAllyAndEnemy(playerNumber, currentGame)
+		console.log(ally, enemy, 'onsocket ally and enemy')
 		const attackingCard = ally.field.find(
 			(currentCard) => currentCard.id === attackingCardID,
 		)

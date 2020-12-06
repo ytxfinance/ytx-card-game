@@ -1,3 +1,3 @@
-export * from './Board';
-export * from './BoardCard';
-export * from './GameList';
+export * from './Board'
+export * from './BoardCard'
+export * from './GameList'

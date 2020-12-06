@@ -9,6 +9,6 @@
 	"maxCardAttack": 9,
 	"minCardLife": 10,
 	"maxCardLife": 18,
-  "secondsPerTurn": 120,
-  "energyRefundRate": 0.25
+  	"secondsPerTurn": 120,
+  	"energyRefundRate": 0.25
 }

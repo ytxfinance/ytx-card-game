@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import styled from 'styled-components'
-import { store } from './Store'
+import { store } from '../store/Store'
 
 export default () => {
 	const { state, dispatch } = useContext(store)

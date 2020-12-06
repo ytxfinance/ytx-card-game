@@ -1,10 +1,11 @@
 import React, { useContext } from 'react'
 import styled from 'styled-components'
 import { store } from '../store/Store'
-export const BoardCard = (props) => {
-    const { state, dispatch } = useContext(store);
 
-    const toggleAttackMode = (cardId) => {
+export const BoardCard = (props) => {
+	const { state, dispatch } = useContext(store)
+
+	const toggleAttackMode = (cardId) => {
 		let isAttackMode = cardId == 0 ? false : !state.isAttackMode
 		dispatch({
 			type: 'SET_ATTACK_MODE',
@@ -13,9 +14,9 @@ export const BoardCard = (props) => {
 				attackingCardId: cardId,
 			},
 		})
-    }
+	}
 
-    /**
+	/**
 	 * @dev Burns the selected card on hand and refund a part of the cost as energy to the player
 	 * @param {String} cardID
 	 */
@@ -28,7 +29,7 @@ export const BoardCard = (props) => {
 	}
 
 	const isGamePaused = () => state.game && state.game.gamePaused
-    let isAllyCard = state.playerNumber === props.playerNumberOwner
+	let isAllyCard = state.playerNumber === props.playerNumberOwner
 	// If the card is ally, display the attack button or invoke, else don't display actions
 	let buttonToDisplay
 	if (props.isInvoked && isAllyCard) {
@@ -77,12 +78,12 @@ export const BoardCard = (props) => {
 
 const StyledCard = styled.div`
 	width: 90px;
-    height: 110px;
-    border: 1px solid #000;
-    position: relative;
-    bottom: 0;
-    display: inline-block;
-    margin: auto 14px;
+	height: 110px;
+	border: 1px solid #000;
+	position: relative;
+	bottom: 0;
+	display: inline-block;
+	margin: auto 14px;
 
 	&.fire {
 		background-color: rgb(255, 125, 125);

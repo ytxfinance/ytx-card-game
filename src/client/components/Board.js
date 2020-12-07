@@ -154,17 +154,7 @@ export const Board = (props) => {
 		},
 		[state.game, allyCards],
 	)
-
-	const getListStyle = (isDraggingOver) => ({
-		background: isDraggingOver ? 'lightblue' : 'lightgrey',
-		display: 'flex',
-		flexDirection: 'center',
-		justifyContent: 'center',
-		alignItems: 'center',
-		height: '100%',
-		overflow: 'auto',
-	})
-
+	
 	return (
 		<Page>
 			<ResultMsg
@@ -243,11 +233,9 @@ export const Board = (props) => {
 									direction="horizontal"
 								>
 									{(provided, snapshot) => (
-										<div
+										<CardPanel
 											ref={provided.innerRef}
-											style={getListStyle(
-												snapshot.isDraggingOver,
-											)}
+											isDraggingOver={snapshot.isDraggingOver}
 										>
 											{allyCards[ALLY_TYPES.field].map(
 												(allyFieldCard, index) => (
@@ -277,7 +265,7 @@ export const Board = (props) => {
 												),
 											)}
 											{provided.placeholder}
-										</div>
+										</CardPanel>
 									)}
 								</Droppable>
 							</FieldContainer>
@@ -287,11 +275,9 @@ export const Board = (props) => {
 									direction="horizontal"
 								>
 									{(provided, snapshot) => (
-										<div
+										<CardPanel
 											ref={provided.innerRef}
-											style={getListStyle(
-												snapshot.isDraggingOver,
-											)}
+											isDraggingOver={snapshot.isDraggingOver}
 										>
 											{allyCards[ALLY_TYPES.hand].map(
 												(allyHandCard, index) => (
@@ -325,7 +311,7 @@ export const Board = (props) => {
 												),
 											)}
 											{provided.placeholder}
-										</div>
+										</CardPanel>
 									)}
 								</Droppable>
 							</FieldContainer>
@@ -494,4 +480,13 @@ const Button = styled.button`
 		opacity: 0.7;
 		cursor: not-allowed;
 	}
+`
+const CardPanel = styled.div`
+	background: ${(props) => (props.isDraggingOver ? 'lightblue' : 'lightgrey')};
+	display: flex;
+	flex-direction: center;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	overflow: auto;
 `

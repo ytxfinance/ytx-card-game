@@ -1,4 +1,4 @@
-require('dotenv-safe').config()
+require('dotenv').config()
 
 const GAME_CONFIG = require('../../GAME_CONFIG.json')
 const { MONGO_URL } = process.env

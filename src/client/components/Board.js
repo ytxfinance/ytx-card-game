@@ -11,6 +11,7 @@ import React, {
 import styled from 'styled-components'
 import { BoardCard } from './BoardCard'
 import { store } from '../store/Store'
+import { FaHeart, FaBolt } from 'react-icons/fa'
 
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
 const reorder = (list, startIndex, endIndex) => {
@@ -154,7 +155,7 @@ export const Board = (props) => {
 		},
 		[state.game, allyCards],
 	)
-	
+
 	return (
 		<Page>
 			<ResultMsg
@@ -164,16 +165,18 @@ export const Board = (props) => {
 				{state.gameOver && state.areYouTheWinner
 					? 'Congratulations! You are the winner!'
 					: state.gameOver && !state.areYouTheWinner
-					? 'You lost! Better luck next time!'
-					: 'Game On'}
+						? 'You lost! Better luck next time!'
+						: null}
 			</ResultMsg>
-			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
-			<p>Timer: {props.turnCountdownTimer}</p>
+			{/* <p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
+			<p>Timer: {props.turnCountdownTimer}</p> */}
 			<ExitLink hidden={!state.gameOver} to="/">
 				Exit
 			</ExitLink>
 			{state.game ? (
 				<Game className="game">
+					<EnemyDeck>Enemy's <br /> Deck</EnemyDeck>
+					<YourDeck>Your <br /> Deck</YourDeck>
 					<EnemyStatsBox
 						className={
 							state.isAttackMode
@@ -189,13 +192,13 @@ export const Board = (props) => {
 							{state.playerNumber === 1
 								? state.game.player2.life
 								: state.game.player1.life}
-							&nbsp;HP
+							<FaHeart />
 						</p>
 						<p>
 							{state.playerNumber === 1
 								? state.game.player2.energy
 								: state.game.player1.energy}
-							&nbsp;Energy
+							<FaBolt />
 						</p>
 					</EnemyStatsBox>
 					<AllyStatsBox className="my-stats">
@@ -204,13 +207,13 @@ export const Board = (props) => {
 							{state.playerNumber === 1
 								? state.game.player1.life
 								: state.game.player2.life}
-							&nbsp;HP
+							<FaHeart />
 						</p>
 						<p>
 							{state.playerNumber === 1
 								? state.game.player1.energy
 								: state.game.player2.energy}
-							&nbsp;Energy
+							<FaBolt />
 						</p>
 					</AllyStatsBox>
 					<CardContainer className="cards-container enemy-cards-container">
@@ -326,7 +329,7 @@ export const Board = (props) => {
 					>
 						End Turn
 					</Button>
-					<Button
+					{/* <Button
 						className="end-turn"
 						style={{
 							backgroundColor: 'red',
@@ -338,31 +341,35 @@ export const Board = (props) => {
 						}}
 					>
 						Surrender
-					</Button>
+					</Button> */}
 				</Game>
 			) : (
-				<p>Game loading...</p>
-			)}
+					<p>Game loading...</p>
+				)}
 		</Page>
 	)
 }
 
 const Page = styled.div`
-	box-shadow: 0 0 30px 0 lightgrey;
-	padding: 50px;
+
 	border-radius: 10px;
 	text-align: center;
 	margin: 0 auto;
-	min-width: 250px;
+	width: 80%;
+	height: 80%;
+	color: #fff;
+	background-color: #1f1f1f;
 
 	h1 {
 		margin-top: 0;
 	}
 `
 const Game = styled.div`
-	width: 900px;
-	min-height: 600px;
-	background-color: whitesmoke;
+	width: 90%;
+	margin: 0 auto;
+	/* border: 3px dashed orange; */
+	/* min-height: 600px; */
+	/* background-color: whitesmoke; */
 	position: relative;
 	display: grid;
 	align-items: center;
@@ -374,7 +381,25 @@ const CardContainer = styled.div`
 	align-items: center;
 	margin: 0 auto;
 	flex-wrap: wrap;
-	max-width: 70%;
+	max-width: 80%;
+	div {
+		/* border: 3px dashed purple; */
+		background-color: rgb(105, 102, 102);
+		height: 100px;
+		position: relative;
+		border-radius: 0.3rem;
+		&::before{
+			content: "?";
+			position: absolute;
+			/* border: 2px solid red; */
+			width: 20px;
+			height: 20px;
+			left: 50%;
+			margin-left: -10px;
+			top: 50%;
+			margin-top: -10px;
+		}
+	}
 `
 const FieldContainer = styled.div`
 	background-color: lightgrey;
@@ -385,14 +410,43 @@ const FieldContainer = styled.div`
 const StatsBox = styled.div`
 	position: absolute;
 	background-color: white;
-	border-radius: 10px;
+	border-radius: 0.3rem;
 	min-width: 120px;
-	box-shadow: 0 0 10px 0px #afafaf;
+	/* box-shadow: 0 0 10px 0px #afafaf; */
+	/* border: 2px solid red; */
 `
 const EnemyStatsBox = styled(StatsBox)`
 	top: 15px;
 	left: 15px;
+	/* border: 2px solid yellow; */
+	display: flex;
+	flex-direction: column;
+	/* border-radius: 0.3rem; */
+	p {
+			color: #fff;
+			font-size: 20px;
+			font-weight: 900;
+			flex: 1;
+			margin: 0;
+			padding: 10px 20px;
+			text-align: center;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		&:first-child{
+			position: absolute;
+			bottom: -50px;
+			text-transform: uppercase;
+		}
 
+		&:nth-child(2){
+			background-color: #df2230;
+		}
+
+		&:last-child{
+			background-color: #7c18e0;
+		}
+	}
 	&.attack-mode {
 		background-color: tomato;
 		cursor: pointer;
@@ -403,9 +457,68 @@ const EnemyStatsBox = styled(StatsBox)`
 		}
 	}
 `
+const EnemyDeck = styled.div`
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	height: 100px;
+	width:150px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	background-color: rgb(105, 102, 102);
+	border-radius: 0.2rem;
+`
+const YourDeck = styled.div`
+	position: absolute;
+	left: 15px;
+	bottom: 15px;
+	/* border: 2px solid red; */
+	height: 100px;
+	width:150px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	background-color: #ff8a32;
+	border-radius: 0.2rem;
+	color: #000;
+`
+
 const AllyStatsBox = styled(StatsBox)`
 	bottom: 15px;
 	right: 15px;
+
+	display: flex;
+	flex-direction: column;
+	/* border-radius: 0.3rem; */
+	p {
+			color: #fff;
+			font-size: 20px;
+			font-weight: 900;
+			flex: 1;
+			margin: 0;
+			padding: 10px 20px;
+			text-align: center;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		&:first-child{
+			position: absolute;
+			top: -50px;
+			text-transform: uppercase;
+		}
+
+		&:nth-child(2){
+			background-color: #df2230;
+		}
+
+		&:last-child{
+			background-color: #7c18e0;
+		}
+	}
 `
 const ExitLink = styled(Link)`
 	background-color: rgb(42, 90, 162);
@@ -456,12 +569,23 @@ const EnemyField = styled.div`
 		}
 	}
 `
-const Field = styled.div``
+const Field = styled.div`
+	border: 2px dashed blue;
+	width: 60%;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+`
 const Button = styled.button`
 	background-color: rgb(42, 90, 162);
 	border: none;
-	border-radius: 10px;
-	padding: 20px;
+	border-radius: 50%;
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	right: 10px;
 	color: white;
 	cursor: pointer;
 	display: inline-block;

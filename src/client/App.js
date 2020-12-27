@@ -9,18 +9,25 @@ import Web3 from 'web3'
 import io from 'socket.io-client'
 import { store, StateProvider } from './store/Store'
 import './index.styl'
+import Navbar from './components/Navbar'
 
 const ErrorMsg = styled.p`
 	color: tomato;
 	font-size: 14pt;
 	text-align: center;
-	display: ${(props) => (props.hidden ? 'none' : 'block')};
+	display: ${(props) => (props.hidden ? 'none' : 'flex')};
+	position: absolute;
+	margin: 0 auto;
+	top: 20px;
 `
 const SuccessMsg = styled.p`
 	color: green;
 	font-size: 14pt;
 	text-align: center;
-	display: ${(props) => (props.hidden ? 'none' : 'block')};
+	display: ${(props) => (props.hidden ? 'none' : 'flex')};
+	position: absolute;
+	margin: 0 auto;
+	top: 20px;
 `
 
 const App = () => {
@@ -181,18 +188,39 @@ const App = () => {
 	}
 
 	return (
-		<div>
-			<SuccessMsg hidden={!state.showSuccess}>{state.success}</SuccessMsg>
-			<ErrorMsg hidden={!state.showError}>{state.error}</ErrorMsg>
-			<Switch>
-				<Route path="/" exact render={() => <WelcomePage />} />
-				<Route path="/create" render={() => <CreatePage />} />
-				<Route path="/game" render={() => <GamePage />} />
-				<Route render={() => <h1>Default 404 page</h1>} />
-			</Switch>
-		</div>
+		<AppContainer>
+			<Navbar />
+			<Wrapper>
+				<SuccessMsg hidden={!state.showSuccess}>{state.success}</SuccessMsg>
+				<ErrorMsg hidden={!state.showError}>{state.error}</ErrorMsg>
+				<Switch>
+					<Route path="/" exact render={() => <WelcomePage />} />
+					<Route path="/create" render={() => <CreatePage />} />
+					<Route path="/game" render={() => <GamePage />} />
+					<Route render={() => <h1>Default 404 page</h1>} />
+				</Switch>
+			</Wrapper>
+		</AppContainer>
 	)
 }
+
+const AppContainer = styled.div`
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+`;
+
+const Wrapper = styled.div`
+	/* border: 1px dashed red; */
+	width: 100%;
+	/* height: 100%; */
+	background-color: #3b3b3b;
+	flex: 1;	
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+`;
 
 ReactDOM.render(
 	<StateProvider>
@@ -202,3 +230,5 @@ ReactDOM.render(
 	</StateProvider>,
 	document.querySelector('#root'),
 )
+
+

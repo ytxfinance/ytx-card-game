@@ -76,6 +76,7 @@ const Button = styled.button`
 	font-weight: 700;
 	cursor: pointer;
 	display: inline-block;
+	outline: none;
 	text-decoration: none;
 	letter-spacing: 1px;
 	width: 30%;

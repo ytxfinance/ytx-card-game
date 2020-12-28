@@ -34,6 +34,10 @@ module.exports = {
 				],
 				include: /src/,
 			},
+			{
+				test: /\.(png|svg|jpg|jpeg|gif)$/i,
+				loader: "url-loader?name=public/images/[name].[ext]",
+			},
 		],
 	},
 	plugins: [

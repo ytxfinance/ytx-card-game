@@ -1,6 +1,13 @@
 import React, { useContext } from 'react'
 import styled from 'styled-components'
 import { store } from '../store/Store'
+import { FaBolt, FaHeart } from 'react-icons/fa'
+import { GiBowieKnife, GiDrop, GiDeathSkull } from 'react-icons/gi'
+import { ImFire } from 'react-icons/im'
+import { FiWind, FiMinusCircle } from 'react-icons/fi'
+import card1 from '../assets/images/card1.png'
+// import card2 from '../../../public/images/card2'
+
 
 export const BoardCard = (props) => {
 	const { state, dispatch } = useContext(store)
@@ -64,12 +71,31 @@ export const BoardCard = (props) => {
 			</div>
 		)
 	}
+
+	const renderSwitch = (param) => {
+		switch (param) {
+			case 'wind':
+				return <FiWind />;
+			case 'fire':
+				return <ImFire />;
+			case 'water':
+				return <GiDrop />;
+			case 'death':
+				return <GiDeathSkull />;
+			case 'life':
+				return <FaHeart />;
+			case 'neutral':
+				return <FiMinusCircle />;
+			default:
+				return param;
+		}
+	}
 	return (
-		<StyledCard className={'card ' + props.type} data-id={props.dataId}>
-			<div>cost: {props.cost}</div>
-			<div>life: {props.life}</div>
-			<div>attack: {props.attack}</div>
-			<div>type: {props.type}</div>
+		<StyledCard data-id={props.dataId}>
+			<div>{props.cost}<FaBolt /> </div>
+			<div>{props.life}<FaHeart /> </div>
+			<div>{props.attack}<GiBowieKnife /></div>
+			<div className={'card ' + props.type}>{renderSwitch(props.type)}</div>
 			<div className="spacer"></div>
 			{buttonToDisplay}
 		</StyledCard>
@@ -78,36 +104,78 @@ export const BoardCard = (props) => {
 
 const StyledCard = styled.div`
 	width: 90px;
-	height: 110px;
-	border: 1px solid #000;
+	height: 120px;
+	border-radius: 0.3rem;
 	position: relative;
 	bottom: 0;
-	display: inline-block;
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
 	margin: auto 14px;
+	padding-bottom: 30px;
+	background-image: url(${card1});
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 100%;
 
-	&.fire {
-		background-color: rgb(255, 125, 125);
+	> div {
+		&:nth-child(-n+4){
+			position: absolute;
+			width: 35px;
+			height:35px;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		}
+
+		&:first-child{
+			left: 0;
+			top: 0;
+			background-color: #7c18e0;
+			border-radius: 0.3rem;
+		}
+		&:nth-child(2){
+			right: -10px;
+			bottom: -10px;
+			background-color: #df2230;
+			border-radius: 50%;
+		}
+		&:nth-child(3){
+			left: -10px;
+			bottom: -10px;
+			background-color: #eb531b;
+			border-radius: 50%;
+		}
+		&:nth-child(4){
+			right: 0;
+			top: 0;
+			border-radius: 0.3rem;
+			&.fire {
+				background-color: rgb(255, 125, 125);
+			}
+
+			&.water {
+				background-color: rgb(125, 204, 255);
+			}
+
+			&.wind {
+				background-color: rgb(176, 255, 170);
+			}
+
+			&.life {
+				background-color: green;
+			}
+
+			&.death {
+				background-color: rgb(180, 180, 180);
+			}
+
+			&.neutral {
+				background-color: rgb(242, 198, 166);
+			}
+		}
 	}
 
-	&.water {
-		background-color: rgb(125, 204, 255);
-	}
-
-	&.wind {
-		background-color: rgb(176, 255, 170);
-	}
-
-	&.life {
-		background-color: rgb(240, 255, 149);
-	}
-
-	&.death {
-		background-color: rgb(180, 180, 180);
-	}
-
-	&.neutral {
-		background-color: rgb(242, 198, 166);
-	}
 
 	&:not(:last-child) {
 		margin-right: 2px;
@@ -115,6 +183,9 @@ const StyledCard = styled.div`
 
 	.spacer {
 		height: 10px;
+	}
+	@media(max-width: 568px){
+		height: 100px;
 	}
 `
 const Button = styled.button`
@@ -144,8 +215,8 @@ const Button = styled.button`
 const CardButton = styled(Button)`
 	border: none;
 	border-radius: 2px;
-	padding: 4px;
-	min-width: auto;
-	width: 90%;
+	padding: 4px 20px;
+	text-align: center;
+	width: 100%;
 	font-variant: small-caps;
 `

@@ -8,9 +8,10 @@ import React, {
 	useLayoutEffect,
 	useCallback,
 } from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { BoardCard } from './BoardCard'
 import { store } from '../store/Store'
+import { FaHeart, FaBolt } from 'react-icons/fa'
 
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
 const reorder = (list, startIndex, endIndex) => {
@@ -154,7 +155,7 @@ export const Board = (props) => {
 		},
 		[state.game, allyCards],
 	)
-	
+
 	return (
 		<Page>
 			<ResultMsg
@@ -164,16 +165,18 @@ export const Board = (props) => {
 				{state.gameOver && state.areYouTheWinner
 					? 'Congratulations! You are the winner!'
 					: state.gameOver && !state.areYouTheWinner
-					? 'You lost! Better luck next time!'
-					: 'Game On'}
+						? 'You lost! Better luck next time!'
+						: null}
 			</ResultMsg>
-			<p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
-			<p>Timer: {props.turnCountdownTimer}</p>
+			{/* <p>Turn: {state.game ? state.game.currentTurnNumber : 0}</p>
+			<p>Timer: {props.turnCountdownTimer}</p> */}
 			<ExitLink hidden={!state.gameOver} to="/">
 				Exit
 			</ExitLink>
 			{state.game ? (
 				<Game className="game">
+					<EnemyDeck>Enemy's <br /> Deck</EnemyDeck>
+					<YourDeck>Your <br /> Deck</YourDeck>
 					<EnemyStatsBox
 						className={
 							state.isAttackMode
@@ -189,13 +192,13 @@ export const Board = (props) => {
 							{state.playerNumber === 1
 								? state.game.player2.life
 								: state.game.player1.life}
-							&nbsp;HP
+							<FaHeart />
 						</p>
 						<p>
 							{state.playerNumber === 1
 								? state.game.player2.energy
 								: state.game.player1.energy}
-							&nbsp;Energy
+							<FaBolt />
 						</p>
 					</EnemyStatsBox>
 					<AllyStatsBox className="my-stats">
@@ -204,13 +207,13 @@ export const Board = (props) => {
 							{state.playerNumber === 1
 								? state.game.player1.life
 								: state.game.player2.life}
-							&nbsp;HP
+							<FaHeart />
 						</p>
 						<p>
 							{state.playerNumber === 1
 								? state.game.player1.energy
 								: state.game.player2.energy}
-							&nbsp;Energy
+							<FaBolt />
 						</p>
 					</AllyStatsBox>
 					<CardContainer className="cards-container enemy-cards-container">
@@ -227,7 +230,7 @@ export const Board = (props) => {
 							>
 								{state.enemyFieldHtml}
 							</EnemyField>
-							<FieldContainer width="width: 70%;">
+							<FieldContainer top >
 								<Droppable
 									droppableId={`${ALLY_TYPES.field}`}
 									direction="horizontal"
@@ -269,7 +272,7 @@ export const Board = (props) => {
 									)}
 								</Droppable>
 							</FieldContainer>
-							<FieldContainer width="width: 70%;">
+							<FieldContainer>
 								<Droppable
 									droppableId={`${ALLY_TYPES.hand}`}
 									direction="horizontal"
@@ -277,7 +280,8 @@ export const Board = (props) => {
 									{(provided, snapshot) => (
 										<CardPanel
 											ref={provided.innerRef}
-											isDraggingOver={snapshot.isDraggingOver}
+											// isDraggingOver={snapshot.isDraggingOver}
+											outter
 										>
 											{allyCards[ALLY_TYPES.hand].map(
 												(allyHandCard, index) => (
@@ -327,10 +331,9 @@ export const Board = (props) => {
 						End Turn
 					</Button>
 					<Button
-						className="end-turn"
+						className="surrender"
 						style={{
 							backgroundColor: 'red',
-							marginTop: '10px',
 						}}
 						disabled={isGamePaused()}
 						onClick={() => {
@@ -341,58 +344,175 @@ export const Board = (props) => {
 					</Button>
 				</Game>
 			) : (
-				<p>Game loading...</p>
-			)}
+					<p>Game loading...</p>
+				)}
 		</Page>
 	)
 }
 
 const Page = styled.div`
-	box-shadow: 0 0 30px 0 lightgrey;
-	padding: 50px;
+
 	border-radius: 10px;
 	text-align: center;
 	margin: 0 auto;
-	min-width: 250px;
-
-	h1 {
+	width: 80%;
+	height: 80%;
+	color: #fff;
+	background-color: #1f1f1f;
+	display: flex;
+	align-items: center;
+	> h1 {
 		margin-top: 0;
+	}
+	@media(max-width: 891px){
+		height: 80%;
+		margin: 0 auto 10%;
+	}
+	@media(max-width: 578px){
+		width: 95%;
+		margin: 0 auto 20%;
 	}
 `
 const Game = styled.div`
-	width: 900px;
-	min-height: 600px;
-	background-color: whitesmoke;
-	position: relative;
-	display: grid;
-	align-items: center;
+	width: 95%;
 	margin: 0 auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 90%;
 `
 const CardContainer = styled.div`
 	display: flex;
+	flex: 1;
 	justify-content: center;
 	align-items: center;
 	margin: 0 auto;
-	flex-wrap: wrap;
-	max-width: 70%;
+	width: 95%;
+	height: 20%;
+	> div {
+		background-color: rgb(105, 102, 102);
+		height: 100%;
+		position: relative;
+		border-radius: 0.3rem;
+
+		&::before{
+			content: "?";
+			position: absolute;
+			width: 20px;
+			height: 20px;
+			left: 50%;
+			margin-left: -10px;
+			top: 50%;
+			margin-top: -10px;
+		}
+	}
+`
+const Field = styled.div`
+	width: 60%;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	flex: 4;
+
+	@media(max-width: 891px){
+		height: 100%;
+		width: 100%;
+	}
+`
+const EnemyField = styled.div`
+	display: flex;
+	width: 70%;
+	flex: 1;
+	margin: 10px 0;
+	overflow: auto;
+	>* + * {
+		margin-left: 10px;
+	}
+	> * {
+		border-radius: 0.3rem;
+	}
+
+	&.attack-mode div:not(.empty-item) {
+		background-color: tomato;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
+	@media(max-width: 891px){
+		width: 95%;
+	}
 `
 const FieldContainer = styled.div`
 	background-color: lightgrey;
+	flex: 1;
+	width: 70%;
 	${(props) => props.width}
-	height: 150px;
-	margin: 20px auto;
+	${({ top }) => top && css`
+		border-radius: 0.3rem;
+		overflow: hidden;
+		@media(max-width: 891px){
+		width: 95%;
+	}
+	`}
+	margin: 0 auto;
+	@media(max-width: 891px){
+		width: 95%;
+	}
 `
 const StatsBox = styled.div`
 	position: absolute;
 	background-color: white;
-	border-radius: 10px;
+	border-radius: 0.3rem;
 	min-width: 120px;
-	box-shadow: 0 0 10px 0px #afafaf;
+	overflow: hidden;
+	@media(max-width: 891px){
+		width: 300px;
+		margin-left: -150px;
+	}
+	@media(max-width: 425px){
+		width: 200px;
+		margin-left: -100px;
+	}
 `
 const EnemyStatsBox = styled(StatsBox)`
 	top: 15px;
 	left: 15px;
+	display: flex;
+	flex-direction: column;
+	> p {
+			color: #fff;
+			font-size: 20px;
+			font-weight: 900;
+			flex: 1;
+			margin: 0;
+			padding: 10px 20px;
+			text-align: center;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		&:first-child{
+			position: absolute;
+			bottom: -50px;
+			text-transform: uppercase;
+			@media(max-width: 891px){
+				display: none;
+			}
+		}
 
+		&:nth-child(2){
+			background-color: #df2230;
+		}
+
+		&:last-child{
+			background-color: #7c18e0;
+		}
+	}
 	&.attack-mode {
 		background-color: tomato;
 		cursor: pointer;
@@ -402,11 +522,87 @@ const EnemyStatsBox = styled(StatsBox)`
 			opacity: 0.7;
 		}
 	}
+	@media(max-width: 891px){
+		top: -55px;
+		left: 50%;
+		flex-direction: row;
+	}
 `
 const AllyStatsBox = styled(StatsBox)`
 	bottom: 15px;
 	right: 15px;
+
+	display: flex;
+	flex-direction: column;
+	> p {
+			color: #fff;
+			font-size: 20px;
+			font-weight: 900;
+			flex: 1;
+			margin: 0;
+			padding: 10px 20px;
+			text-align: center;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		&:first-child{
+			position: absolute;
+			top: -50px;
+			text-transform: uppercase;
+			@media(max-width: 891px){
+				display: none;
+			}
+		}
+
+		&:nth-child(2){
+			background-color: #df2230;
+		}
+
+		&:last-child{
+			background-color: #7c18e0;
+		}
+	}
+	@media(max-width: 891px){
+		bottom: -55px;
+		flex-direction: row;
+		left: 50%;
+	}
 `
+const EnemyDeck = styled.div`
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	height: 100px;
+	width:150px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	background-color: rgb(105, 102, 102);
+	border-radius: 0.2rem;
+	@media(max-width: 891px){
+		display: none;
+	}
+`
+const YourDeck = styled.div`
+	position: absolute;
+	left: 15px;
+	bottom: 15px;
+	height: 100px;
+	width:150px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	background-color: #ff8a32;
+	border-radius: 0.2rem;
+	color: #000;
+	@media(max-width: 891px){
+		display: none;
+	}
+`
+
 const ExitLink = styled(Link)`
 	background-color: rgb(42, 90, 162);
 	border: none;
@@ -439,33 +635,29 @@ const ResultMsg = styled.h1`
 	color: ${(props) =>
 		props.winner ? 'green' : props.loser ? 'tomato' : 'black'};
 `
-const EnemyField = styled.div`
-	display: grid;
-	grid-auto-flow: column;
-	grid-gap: 5px;
-	justify-items: center;
-	width: 70%;
-	margin: 9px auto;
 
-	&.attack-mode div:not(.empty-item) {
-		background-color: tomato;
-		cursor: pointer;
-
-		&:hover {
-			opacity: 0.7;
-		}
-	}
-`
-const Field = styled.div``
 const Button = styled.button`
 	background-color: rgb(42, 90, 162);
 	border: none;
-	border-radius: 10px;
-	padding: 20px;
+	border-radius: 50%;
+	width: 80px;
+	height: 80px;
+	position: absolute;
+	right: 5%;
+	bottom: 35%;
 	color: white;
 	cursor: pointer;
-	display: inline-block;
 	text-decoration: none;
+	&.end-turn{
+		top: 35%;
+		@media(max-width: 891px){
+			top: 111.5%;
+			left: 35%
+		}
+		@media(max-width: 630px){
+			left: 19%;
+		}
+	}
 
 	&:hover {
 		opacity: 0.7;
@@ -480,11 +672,19 @@ const Button = styled.button`
 		opacity: 0.7;
 		cursor: not-allowed;
 	}
+	@media(max-width: 891px){
+		top: 111.5%;
+		right: 35%;
+		width: 70px;
+		height: 70px;
+	}
+	@media(max-width: 630px){
+		right: 25%;
+	}
 `
 const CardPanel = styled.div`
-	background: ${(props) => (props.isDraggingOver ? 'lightblue' : 'lightgrey')};
+	background: ${({ outter }) => (outter ? '#1f1f1f' : 'lightgrey')};
 	display: flex;
-	flex-direction: center;
 	justify-content: center;
 	align-items: center;
 	height: 100%;

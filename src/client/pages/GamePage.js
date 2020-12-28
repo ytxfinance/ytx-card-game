@@ -4,6 +4,8 @@ import styled from 'styled-components'
 import GAME_CONFIG from '../../../GAME_CONFIG.json'
 import { Board, BoardCard } from '../components'
 import { store } from '../store/Store'
+import { GiTrophyCup } from 'react-icons/gi'
+import { HiOutlineEmojiSad } from 'react-icons/hi'
 
 const HAND_SIZE = GAME_CONFIG.maxCardsInHand
 const FIELD_SIZE = GAME_CONFIG.maxCardsInField
@@ -90,16 +92,16 @@ export default () => {
 			visualEnemyHand =
 				state.game.player1.hand.length > 0
 					? state.game.player1.hand.map(() => (
-							<StyledCard key={Math.random()}></StyledCard>
-					  ))
+						<StyledCard key={Math.random()}></StyledCard>
+					))
 					: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 			visualAllyHand = generateHandCards(state.game.player2.hand, 2)
 		} else {
 			visualEnemyHand =
 				state.game.player2.hand.length > 0
 					? state.game.player2.hand.map(() => (
-							<StyledCard key={Math.random()}></StyledCard>
-					  ))
+						<StyledCard key={Math.random()}></StyledCard>
+					))
 					: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 			visualAllyHand = generateHandCards(state.game.player1.hand, 1)
 		}
@@ -214,8 +216,8 @@ export default () => {
 							}}
 						/>
 					) : (
-						''
-					)}
+							''
+						)}
 				</FieldItem>,
 			)
 			enemyFieldHtml.push(
@@ -244,8 +246,8 @@ export default () => {
 							}}
 						/>
 					) : (
-						''
-					)}
+							''
+						)}
 				</FieldItem>,
 			)
 		}
@@ -257,19 +259,19 @@ export default () => {
 		let cards =
 			handCards.length > 0
 				? handCards.map((card) => (
-						<BoardCard
-							{...card}
-							key={card.id}
-							dataId={card.id}
-							playerNumberOwner={playerNumberOwner}
-							toggleAttackMode={() => {
-								toggleAttackMode(card.id)
-							}}
-							burnCardOnHand={() => {
-								burnCardOnHand(card.id)
-							}}
-						/>
-				  ))
+					<BoardCard
+						{...card}
+						key={card.id}
+						dataId={card.id}
+						playerNumberOwner={playerNumberOwner}
+						toggleAttackMode={() => {
+							toggleAttackMode(card.id)
+						}}
+						burnCardOnHand={() => {
+							burnCardOnHand(card.id)
+						}}
+					/>
+				))
 				: [<EmptyHand key={Math.random()}>Empty hand</EmptyHand>]
 		return cards
 	}
@@ -504,6 +506,7 @@ export default () => {
 			// Display the you win container
 			setGameOver(
 				<GameOverContainer>
+					<GiTrophyCup size={50} />
 					<h1>You Win!</h1>
 					<p>
 						Congratulations you've earned 180 YTX tokens while 20
@@ -516,6 +519,7 @@ export default () => {
 			// Display the you lost container
 			setGameOver(
 				<GameOverContainer>
+					<HiOutlineEmojiSad size={50} />
 					<h1>You Lose!</h1>
 					<p>Too bad, you lost the game. Good luck next time!</p>
 					<Link to="/">Exit</Link>
@@ -550,15 +554,15 @@ const Page = styled.div`
 	}
 `
 const GameOverContainer = styled.div`
-	position: fixed;
-	width: 80vw;
-	height: 50vh;
-	background-color: white;
-	border: 1px solid grey;
+	position: absolute;
+	color: #fff;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color: rgba(0, 0, 0, 0.7);
 	text-align: center;
 	z-index: 10000;
-	top: 25vh;
-	left: 10vw;
 	display: flex;
 	justify-content: center;
 	align-items: center;

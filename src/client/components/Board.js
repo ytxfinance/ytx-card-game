@@ -230,7 +230,7 @@ export const Board = (props) => {
 							>
 								{state.enemyFieldHtml}
 							</EnemyField>
-							<FieldContainer top width="width: 70%;">
+							<FieldContainer top >
 								<Droppable
 									droppableId={`${ALLY_TYPES.field}`}
 									direction="horizontal"
@@ -272,7 +272,7 @@ export const Board = (props) => {
 									)}
 								</Droppable>
 							</FieldContainer>
-							<FieldContainer width="width: 70%;">
+							<FieldContainer>
 								<Droppable
 									droppableId={`${ALLY_TYPES.hand}`}
 									direction="horizontal"
@@ -334,7 +334,6 @@ export const Board = (props) => {
 						className="surrender"
 						style={{
 							backgroundColor: 'red',
-							marginTop: '10px',
 						}}
 						disabled={isGamePaused()}
 						onClick={() => {
@@ -372,6 +371,7 @@ const Page = styled.div`
 	}
 	@media(max-width: 578px){
 		width: 95%;
+		margin: 0 auto 20%;
 	}
 `
 const Game = styled.div`
@@ -390,14 +390,16 @@ const Game = styled.div`
 `
 const CardContainer = styled.div`
 	display: flex;
+	flex: 1;
 	justify-content: center;
 	align-items: center;
 	/* border: 2px solid purple; */
 	margin: 0 auto;
 	width: 95%;
+	height: 20%;
 	> div {
 		background-color: rgb(105, 102, 102);
-		height: 100px;
+		height: 100%;
 		position: relative;
 		border-radius: 0.3rem;
 		/* @media(max-width: 891px){
@@ -415,23 +417,71 @@ const CardContainer = styled.div`
 		}
 	}
 `
+const Field = styled.div`
+	width: 60%;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	/* border: 1px dashed red; */
+	flex: 4;
+
+	@media(max-width: 891px){
+		height: 100%;
+		width: 100%;
+		/* border: 2px solid red; */
+	}
+`
+const EnemyField = styled.div`
+	display: flex;
+	width: 70%;
+	flex: 1;
+	margin: 10px 0;
+	overflow: auto;
+	>* + * {
+		margin-left: 10px;
+	}
+	> * {
+		border-radius: 0.3rem;
+		/* height: 100%; */
+	}
+
+	&.attack-mode div:not(.empty-item) {
+		background-color: tomato;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
+	@media(max-width: 891px){
+		width: 95%;
+	}
+`
 const FieldContainer = styled.div`
 	background-color: lightgrey;
+	flex: 1;
+	/* display: flex;
+	justify-content: center;
+	align-items: center; */
+	width: 70%;
 	${(props) => props.width}
 	${({ top }) => top && css`
-		/* border: 1px solid red; */
 		border-radius: 0.3rem;
 		overflow: hidden;
 		@media(max-width: 891px){
 		width: 95%;
+		/* height: 40%; */
 		/* border: 1px dashed red; */
 	}
 	`}
-	height: 150px;
+	/* height: 40%; */
 	margin: 0 auto;
 	@media(max-width: 891px){
 		width: 95%;
 		/* border: 1px dashed red; */
+		/* align-items: stretch !important; */
 	}
 `
 const StatsBox = styled.div`
@@ -611,46 +661,7 @@ const ResultMsg = styled.h1`
 	color: ${(props) =>
 		props.winner ? 'green' : props.loser ? 'tomato' : 'black'};
 `
-const EnemyField = styled.div`
-	display: flex;
-	width: 70%;
-	margin: 10px 0;
-	overflow: auto;
-	>* + * {
-		margin-left: 10px;
-	}
-	> * {
-		border-radius: 0.3rem;
-	}
 
-	&.attack-mode div:not(.empty-item) {
-		background-color: tomato;
-		cursor: pointer;
-
-		&:hover {
-			opacity: 0.7;
-		}
-	}
-	@media(max-width: 891px){
-		width: 95%;
-	}
-`
-const Field = styled.div`
-	width: 60%;
-	margin: 0 auto;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	> div {
-		flex: 1;
-	}
-	@media(max-width: 891px){
-		height: 100%;
-		width: 100%;
-		/* border: 2px solid red; */
-	}
-`
 const Button = styled.button`
 	background-color: rgb(42, 90, 162);
 	border: none;
@@ -658,7 +669,7 @@ const Button = styled.button`
 	width: 80px;
 	height: 80px;
 	position: absolute;
-	right: 1%;
+	right: 5%;
 	bottom: 35%;
 	color: white;
 	cursor: pointer;
@@ -691,7 +702,7 @@ const Button = styled.button`
 		cursor: not-allowed;
 	}
 	@media(max-width: 891px){
-		bottom: -23%;
+		top: 111.5%;
 		right: 35%;
 		width: 70px;
 		height: 70px;

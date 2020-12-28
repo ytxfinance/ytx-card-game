@@ -104,7 +104,7 @@ export const BoardCard = (props) => {
 
 const StyledCard = styled.div`
 	width: 90px;
-	height: 120px;
+	height: 100px;
 	/* border: 1px solid #000; */
 	border-radius: 0.3rem;
 	position: relative;

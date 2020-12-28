@@ -561,11 +561,8 @@ const GameOverContainer = styled.div`
 	left: 0;
 	right: 0;
 	background-color: rgba(0, 0, 0, 0.7);
-	/* border: 3px dashed red; */
 	text-align: center;
 	z-index: 10000;
-	/* top: 25vh;
-	left: 10vw; */
 	display: flex;
 	justify-content: center;
 	align-items: center;

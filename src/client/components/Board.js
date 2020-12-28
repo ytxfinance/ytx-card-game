@@ -365,7 +365,6 @@ const Page = styled.div`
 		margin-top: 0;
 	}
 	@media(max-width: 891px){
-		/* border: 3px solid red; */
 		height: 80%;
 		margin: 0 auto 10%;
 	}
@@ -377,23 +376,18 @@ const Page = styled.div`
 const Game = styled.div`
 	width: 95%;
 	margin: 0 auto;
-	/* border: 3px dashed orange; */
 	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	height: 90%;
-	/* @media(max-width: 891px){
-		width: 95%;
-	} */
 `
 const CardContainer = styled.div`
 	display: flex;
 	flex: 1;
 	justify-content: center;
 	align-items: center;
-	/* border: 2px solid purple; */
 	margin: 0 auto;
 	width: 95%;
 	height: 20%;
@@ -402,9 +396,7 @@ const CardContainer = styled.div`
 		height: 100%;
 		position: relative;
 		border-radius: 0.3rem;
-		/* @media(max-width: 891px){
 
-		} */
 		&::before{
 			content: "?";
 			position: absolute;
@@ -424,13 +416,11 @@ const Field = styled.div`
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	/* border: 1px dashed red; */
 	flex: 4;
 
 	@media(max-width: 891px){
 		height: 100%;
 		width: 100%;
-		/* border: 2px solid red; */
 	}
 `
 const EnemyField = styled.div`
@@ -444,7 +434,6 @@ const EnemyField = styled.div`
 	}
 	> * {
 		border-radius: 0.3rem;
-		/* height: 100%; */
 	}
 
 	&.attack-mode div:not(.empty-item) {
@@ -462,9 +451,6 @@ const EnemyField = styled.div`
 const FieldContainer = styled.div`
 	background-color: lightgrey;
 	flex: 1;
-	/* display: flex;
-	justify-content: center;
-	align-items: center; */
 	width: 70%;
 	${(props) => props.width}
 	${({ top }) => top && css`
@@ -472,16 +458,11 @@ const FieldContainer = styled.div`
 		overflow: hidden;
 		@media(max-width: 891px){
 		width: 95%;
-		/* height: 40%; */
-		/* border: 1px dashed red; */
 	}
 	`}
-	/* height: 40%; */
 	margin: 0 auto;
 	@media(max-width: 891px){
 		width: 95%;
-		/* border: 1px dashed red; */
-		/* align-items: stretch !important; */
 	}
 `
 const StatsBox = styled.div`
@@ -490,8 +471,6 @@ const StatsBox = styled.div`
 	border-radius: 0.3rem;
 	min-width: 120px;
 	overflow: hidden;
-	/* box-shadow: 0 0 10px 0px #afafaf; */
-	/* border: 2px solid red; */
 	@media(max-width: 891px){
 		width: 300px;
 		margin-left: -150px;
@@ -504,11 +483,8 @@ const StatsBox = styled.div`
 const EnemyStatsBox = styled(StatsBox)`
 	top: 15px;
 	left: 15px;
-	/* border: 2px solid yellow; */
 	display: flex;
 	flex-direction: column;
-	/* border-radius: 0.3rem; */
-	/* overflow: hidden; */
 	> p {
 			color: #fff;
 			font-size: 20px;
@@ -558,7 +534,6 @@ const AllyStatsBox = styled(StatsBox)`
 
 	display: flex;
 	flex-direction: column;
-	/* border-radius: 0.3rem; */
 	> p {
 			color: #fff;
 			font-size: 20px;
@@ -614,7 +589,6 @@ const YourDeck = styled.div`
 	position: absolute;
 	left: 15px;
 	bottom: 15px;
-	/* border: 2px solid red; */
 	height: 100px;
 	width:150px;
 	display: flex;
@@ -673,17 +647,14 @@ const Button = styled.button`
 	bottom: 35%;
 	color: white;
 	cursor: pointer;
-	/* display: inline-block; */
 	text-decoration: none;
 	&.end-turn{
 		top: 35%;
 		@media(max-width: 891px){
-			/* bottom: 0; */
 			top: 111.5%;
 			left: 35%
 		}
 		@media(max-width: 630px){
-			/* bottom: -26.5%; */
 			left: 19%;
 		}
 	}
@@ -714,10 +685,8 @@ const Button = styled.button`
 const CardPanel = styled.div`
 	background: ${({ outter }) => (outter ? '#1f1f1f' : 'lightgrey')};
 	display: flex;
-	/* flex-direction: center; */
 	justify-content: center;
 	align-items: center;
 	height: 100%;
 	overflow: auto;
-	/* border: 1px solid red; */
 `

@@ -104,8 +104,7 @@ export const BoardCard = (props) => {
 
 const StyledCard = styled.div`
 	width: 90px;
-	height: 100px;
-	/* border: 1px solid #000; */
+	height: 120px;
 	border-radius: 0.3rem;
 	position: relative;
 	bottom: 0;
@@ -114,7 +113,6 @@ const StyledCard = styled.div`
 	align-items: flex-end;
 	margin: auto 14px;
 	padding-bottom: 30px;
-	/* border: 2px solid green; */
 	background-image: url(${card1});
 	background-repeat: no-repeat;
 	background-position: center;
@@ -122,7 +120,6 @@ const StyledCard = styled.div`
 
 	> div {
 		&:nth-child(-n+4){
-			/* border: 1px solid red; */
 			position: absolute;
 			width: 35px;
 			height:35px;
@@ -186,6 +183,9 @@ const StyledCard = styled.div`
 
 	.spacer {
 		height: 10px;
+	}
+	@media(max-width: 568px){
+		height: 100px;
 	}
 `
 const Button = styled.button`

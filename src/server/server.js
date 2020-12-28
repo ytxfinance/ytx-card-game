@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv-safe').config()
 
 const GAME_CONFIG = require('../../GAME_CONFIG.json')
 const { MONGO_URL } = process.env
@@ -44,15 +44,14 @@ app.use('*', (req, res, next) => {
 	// Logger
 	let time = new Date()
 	console.log(
-		`${req.method} to ${
-			req.originalUrl
+		`${req.method} to ${req.originalUrl
 		} at ${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`,
 	)
 	next()
 })
 
 app.post('/github-push', (req, res) => {
-	exec('yarn pull && pm2 restart all', (err, stderr, stout) => {})
+	exec('yarn pull && pm2 restart all', (err, stderr, stout) => { })
 	res.status(200).send('Ok')
 })
 
@@ -108,7 +107,7 @@ io.on('connection', async (socket) => {
 					'player1.account': data.account,
 				})
 			}
-		} catch (e) {}
+		} catch (e) { }
 		if (!data.ytxBet || data.ytxBet == 0) {
 			return socket.emit('user-error', '#1 The bet is empty')
 		}
@@ -312,7 +311,7 @@ io.on('connection', async (socket) => {
 				socket: socket.id,
 				account,
 			})
-		} catch (e) {}
+		} catch (e) { }
 	})
 	socket.on('end-turn', async (data) => {
 		console.log('end-turn', data.currentGameID)
@@ -1095,7 +1094,7 @@ const removeInactiveGames = async () => {
 			if (position == -1) {
 				try {
 					await db.collection('games').deleteOne(game)
-				} catch (e) {}
+				} catch (e) { }
 			}
 		})
 	} catch (e) {

@@ -272,7 +272,7 @@ export const Board = (props) => {
 									)}
 								</Droppable>
 							</FieldContainer>
-							<FieldContainer>
+							<FieldContainer bottom>
 								<Droppable
 									droppableId={`${ALLY_TYPES.hand}`}
 									direction="horizontal"
@@ -356,7 +356,7 @@ const Page = styled.div`
 	text-align: center;
 	margin: 0 auto;
 	width: 80%;
-	height: 80%;
+	height: 90%;
 	color: #fff;
 	background-color: #1f1f1f;
 	display: flex;
@@ -434,6 +434,7 @@ const EnemyField = styled.div`
 	}
 	> * {
 		border-radius: 0.3rem;
+		height: 100% !important;
 	}
 
 	&.attack-mode div:not(.empty-item) {
@@ -459,6 +460,18 @@ const FieldContainer = styled.div`
 		@media(max-width: 891px){
 		width: 95%;
 	}
+	`}
+	${({ bottom }) => bottom && css`
+		> div {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		@media(max-width: 891px){
+			width: 95%;
+		}
 	`}
 	margin: 0 auto;
 	@media(max-width: 891px){

@@ -5,11 +5,48 @@ import { FaBolt, FaHeart } from 'react-icons/fa'
 import { GiBowieKnife, GiDrop, GiDeathSkull } from 'react-icons/gi'
 import { ImFire } from 'react-icons/im'
 import { FiWind, FiMinusCircle } from 'react-icons/fi'
-import card1 from '../assets/images/card1.png'
-// import card2 from '../../../public/images/card2'
+import one from '../../../public/images/one.png'
+import two from '../../../public/images/two.png'
+import three from '../../../public/images/three.png'
+import four from '../../../public/images/four.png'
+import five from '../../../public/images/five.png'
+import six from '../../../public/images/six.png'
+import seven from '../../../public/images/seven.png'
+import eight from '../../../public/images/eight.png'
+import nine from '../../../public/images/nine.png'
+import ten from '../../../public/images/ten.png'
+import eleven from '../../../public/images/eleven.png'
+import twelve from '../../../public/images/twelve.png'
+import tt from '../../../public/images/tt.png'
+import zz from '../../../public/images/zz.png'
+
+
 
 
 export const BoardCard = (props) => {
+	const card_names = {
+		one,
+		two,
+		three,
+		four,
+		five,
+		six,
+		seven,
+		eight,
+		nine,
+		ten,
+		eleven,
+		twelve,
+		tt,
+		zz
+	}
+
+	let img_name;
+
+	if (Object.keys(card_names).includes(props.card_img)) {
+		img_name = card_names[props.card_img]
+	}
+
 	const { state, dispatch } = useContext(store)
 
 	const toggleAttackMode = (cardId) => {
@@ -91,10 +128,10 @@ export const BoardCard = (props) => {
 		}
 	}
 	return (
-		<StyledCard data-id={props.dataId}>
-			<div>{props.cost}<FaBolt /> </div>
-			<div>{props.life}<FaHeart /> </div>
-			<div>{props.attack}<GiBowieKnife /></div>
+		<StyledCard data-id={props.dataId} card_name={img_name}>
+			<div>{props.cost}<FaBolt size={18} /> </div>
+			<div><span>{props.life}</span><FaHeart color={'rgba(255, 255, 255, 0.3)'} size={26} /> </div>
+			<div><span>{props.attack}</span><GiBowieKnife color={'rgba(255, 255, 255, 0.3)'} size={26} /> </div>
 			<div className={'card ' + props.type}>{renderSwitch(props.type)}</div>
 			<div className="spacer"></div>
 			{buttonToDisplay}
@@ -103,8 +140,8 @@ export const BoardCard = (props) => {
 }
 
 const StyledCard = styled.div`
-	width: 90px;
-	height: 120px;
+	width: 100px;
+	height: 145px;
 	border-radius: 0.3rem;
 	position: relative;
 	bottom: 0;
@@ -113,19 +150,25 @@ const StyledCard = styled.div`
 	align-items: flex-end;
 	margin: auto 14px;
 	padding-bottom: 30px;
-	background-image: url(${card1});
+	background-image: ${({ card_name }) => `url(${card_name})`};
 	background-repeat: no-repeat;
 	background-position: center;
-	background-size: 100%;
+	background-size: cover;
+	font-weight: 900;
+	font-size: 18px;
 
 	> div {
 		&:nth-child(-n+4){
 			position: absolute;
-			width: 35px;
-			height:35px;
+			width: 30px;
+			height:30px;
 			display: flex;
-			justify-content: space-around;
+			justify-content: center;
 			align-items: center;
+			> span {
+				position: absolute;
+				font-size: 18px;
+			}
 		}
 
 		&:first-child{
@@ -133,6 +176,10 @@ const StyledCard = styled.div`
 			top: 0;
 			background-color: #7c18e0;
 			border-radius: 0.3rem;
+			width: 35px;
+			>*:last-child{
+				margin-left: 2px;
+			}
 		}
 		&:nth-child(2){
 			right: -10px;
@@ -184,8 +231,9 @@ const StyledCard = styled.div`
 	.spacer {
 		height: 10px;
 	}
-	@media(max-width: 568px){
-		height: 100px;
+	@media(max-width: 891px){
+		height: 130px;
+		width: 90px;
 	}
 `
 const Button = styled.button`

@@ -1134,6 +1134,7 @@ const randomRange = (min, max) => {
 }
 
 const generateOneCard = (index, playerNumberOwner) => {
+	let img_names = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'tt', 'zz']
 	let life = randomRange(globalMinLife, globalMaxLife)
 	let attack = randomRange(globalMinAttack, globalMaxAttack)
 	let type = globalCardTypes[randomRange(0, globalCardTypes.length - 1)]
@@ -1156,6 +1157,7 @@ const generateOneCard = (index, playerNumberOwner) => {
 		life,
 		attack,
 		type,
+		card_img: img_names[Math.floor(Math.random() * 14)],
 		playerNumberOwner,
 	}
 	return card
